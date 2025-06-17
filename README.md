@@ -1,3 +1,30 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Just An URL Shortener](#just-an-url-shortener)
+  - [Features](#features)
+  - [Screenshots](#screenshots)
+  - [Quick Start with Docker](#quick-start-with-docker)
+  - [Configuration](#configuration)
+    - [Backup Configuration](#backup-configuration)
+      - [S3 Backup Configuration](#s3-backup-configuration)
+      - [Local Backup Configuration](#local-backup-configuration)
+    - [Backup Commands](#backup-commands)
+      - [Manual Backup](#manual-backup)
+      - [Restore Backup](#restore-backup)
+      - [List Backups](#list-backups)
+    - [Automated Backups](#automated-backups)
+      - [Using Cron](#using-cron)
+      - [Using Docker with Cron](#using-docker-with-cron)
+      - [Using Systemd Timer](#using-systemd-timer)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Commercial License](#commercial-license)
+  - [Author](#author)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Just An URL Shortener
 
 A simple, fast, and secure URL shortener service built with Django. This service allows you to create short URLs from long ones, track visits, and manage your shortened URLs through a beautiful admin interface.
