@@ -1,0 +1,26 @@
+[project]
+name = "ja-shorterner"
+version = "0.1.0"
+description = "Just Another URL shortener"
+authors = [
+    {name = "Daniel Garcia (cr0hn)"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "django[argon2] (>=5.2.3,<6.0.0)",
+    "django-unfold (>=0.60.0,<0.61.0)",
+    "dj-database-url (>=3.0.0,<4.0.0)",
+    "whitenoise (>=6.9.0,<7.0.0)",
+    "sentry-sdk (>=2.30.0,<3.0.0)",
+    "uuid7 (>=0.1.0,<0.2.0)",
+    "python-decouple (>=3.8,<4.0)",
+    "gunicorn (>=23.0.0,<24.0.0)",
+    "gevent (>=25.5.1,<26.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

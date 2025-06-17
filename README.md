@@ -15,9 +15,9 @@ A simple, fast, and secure URL shortener service built with Django. This service
 
 ## Screenshots
 
-![Screenshot 1](./screenshots/screenshot-1.png)
-![Screenshot 2](./screenshots/screenshot-2.png)
-![Screenshot 3](./screenshots/screenshot-3.png)
+![Screenshot 1](./screenshots/sc-1.png)
+![Screenshot 1](./screenshots/sc-2.png)
+![Screenshot 1](./screenshots/sc-2.png)
 
 
 ## Quick Start with Docker

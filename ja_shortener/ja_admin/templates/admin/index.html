@@ -1,0 +1,101 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+{% load cache humanize i18n unfold %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block title %}
+    {% if subtitle %}{{ subtitle }} | {% endif %}
+    {{ title }} | {{ site_title|default:_('Django site admin') }}
+{% endblock %}
+
+{% block branding %}
+    <h1 id="site-name">
+        <a href="{% url 'admin:index' %}">
+            {{ site_header|default:_('Django administration') }}
+        </a>
+    </h1>
+{% endblock %}
+
+{% block content %}
+    <!-- Main Statistics Cards -->
+    {% component "unfold/components/flex.html" with class="gap-8 mb-8 flex-col lg:flex-row" %}
+        {% component "unfold/components/card.html" with class="lg:w-1/4" %}
+            {% component "unfold/components/text.html" %}
+                {% trans "Total URLs" %}
+            {% endcomponent %}
+            {% component "unfold/components/title.html" %}
+                {{ total_urls|default:0 }}
+            {% endcomponent %}
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" with class="lg:w-1/4" %}
+            {% component "unfold/components/text.html" %}
+                {% trans "Total Visits" %}
+            {% endcomponent %}
+            {% component "unfold/components/title.html" %}
+                {{ total_visits|default:0 }}
+            {% endcomponent %}
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" with class="lg:w-1/4" %}
+            {% component "unfold/components/text.html" %}
+                {% trans "Unique Visitors" %}
+            {% endcomponent %}
+            {% component "unfold/components/title.html" %}
+                {{ unique_visitors|default:0 }}
+            {% endcomponent %}
+        {% endcomponent %}
+
+        {% component "unfold/components/card.html" with class="lg:w-1/4" %}
+            {% component "unfold/components/text.html" %}
+                {% trans "Avg Visits per URL" %}
+            {% endcomponent %}
+            {% component "unfold/components/title.html" %}
+                {{ avg_visits_per_url|default:0 }}
+            {% endcomponent %}
+        {% endcomponent %}
+    {% endcomponent %}
+
+    <!-- Latest Shortened URLs Table -->
+    {% if latest_shortened_urls.rows %}
+        {% component "unfold/components/container.html" with class="mt-2 mb-8" %}
+            {% component "unfold/components/card.html" with title=_("Latest Shortened URLs") %}
+                {% component "unfold/components/table.html" with table=latest_shortened_urls card_included=1 striped=1 %}{% endcomponent %}
+            {% endcomponent %}
+        {% endcomponent %}
+    {% endif %}
+
+    <!-- Two-column layout for Most Visited URLs and Daily Trends -->
+    {% component "unfold/components/flex.html" with class="gap-8 mb-8 flex-col lg:flex-row" %}
+        <!-- Most Visited URLs -->
+        {% if most_visited_urls.rows %}
+            {% component "unfold/components/card.html" with class="lg:w-1/2" title=_("Most Visited URLs") %}
+                {% component "unfold/components/table.html" with table=most_visited_urls card_included=1 striped=1 %}{% endcomponent %}
+            {% endcomponent %}
+        {% endif %}
+
+        <!-- Daily Trends -->
+        {% if daily_trends.rows %}
+            {% component "unfold/components/card.html" with class="lg:w-1/2" title=_("Daily Trends (Last 7 Days)") %}
+                {% component "unfold/components/table.html" with table=daily_trends card_included=1 striped=1 %}{% endcomponent %}
+            {% endcomponent %}
+        {% endif %}
+    {% endcomponent %}
+
+    <!-- Empty State -->
+    {% if not total_urls %}
+        {% component "unfold/components/container.html" with class="mt-8 mb-8" %}
+            {% component "unfold/components/card.html" %}
+                {% component "unfold/components/flex.html" with class="items-center justify-center p-8 flex-col" %}
+                    {% component "unfold/components/title.html" with class="text-center text-gray-500" %}
+                        {% trans "No URLs created yet" %}
+                    {% endcomponent %}
+                    {% component "unfold/components/text.html" with class="text-center text-gray-400" %}
+                        {% trans "Start by creating your first shortened URL" %}
+                    {% endcomponent %}
+                {% endcomponent %}
+            {% endcomponent %}
+        {% endcomponent %}
+    {% endif %}
+{% endblock %}
