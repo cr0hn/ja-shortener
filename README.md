@@ -22,7 +22,7 @@ A simple, fast, and secure URL shortener service built with Django. This service
 
 ## Quick Start with Docker
 
-**Basic expected
+**Basic expected**
 
 ```bash
 docker run -d \
@@ -88,7 +88,7 @@ This project is licensed under the Functionary Source License (FSL). See the [LI
 
 ## Author
 
-- Daniel García (cr0hn) - cr0hn@cr0hn.com
+- Daniel García (cr0hn) - cr0hn<at>cr0hn.com
 
 
 
