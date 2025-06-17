@@ -199,6 +199,22 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-dbbackup"
+version = "4.3.0"
+description = "Management commands to help backup and restore a project database and media."
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "django_dbbackup-4.3.0-py3-none-any.whl", hash = "sha256:b4003b353d49d914ffbc033c793198426572d0a2b137ec795ddb2fb82225b960"},
+    {file = "django_dbbackup-4.3.0.tar.gz", hash = "sha256:3549c8ccfdb167f20ca2c26eb0dfa55c79aa3f31ea4e4dbfa0816bc18ceec6dc"},
+]
+
+[package.dependencies]
+django = ">=3.2"
+pytz = "*"
+
+[[package]]
 name = "django-unfold"
 version = "0.60.0"
 description = "Modern Django admin theme for seamless interface development"
@@ -400,6 +416,18 @@ groups = ["main"]
 files = [
     {file = "python-decouple-3.8.tar.gz", hash = "sha256:ba6e2657d4f376ecc46f77a3a615e058d93ba5e465c01bbe57289bfb7cce680f"},
     {file = "python_decouple-3.8-py3-none-any.whl", hash = "sha256:d0d45340815b25f4de59c974b855bb38d03151d81b037d9e3f463b0c9f8cbd66"},
+]
+
+[[package]]
+name = "pytz"
+version = "2025.2"
+description = "World timezone definitions, modern and historical"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00"},
+    {file = "pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3"},
 ]
 
 [[package]]
@@ -643,4 +671,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "2870ebb3c61db113cd27d5c1b429ca6b68f56a5cec35bee246377e1cd8101943"
+content-hash = "806e00fbddbf8f447cc4eeed926dd5e96238a688a9dae0c1fbdea45ca2c230e9"

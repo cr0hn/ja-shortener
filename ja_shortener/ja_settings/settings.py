@@ -218,3 +218,35 @@ UNFOLD = {
 }
 
 ENABLE_VISITS_TRACKING = decouple.config('ENABLE_VISITS_TRACKING', default=True, cast=bool)
+
+# Enable backup configuration
+ENABLE_BACKUP = decouple.config('ENABLE_BACKUP', default=False, cast=bool)
+
+# Backup configuration
+if ENABLE_BACKUP:
+    INSTALLED_APPS += [
+        'dbbackup'
+    ]
+
+    # Backup type
+    BACKUP_TYPE = decouple.config('BACKUP_TYPE', default='s3')
+
+    if BACKUP_TYPE == 's3':
+        DBBACKUP_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+        DBBACKUP_STORAGE_OPTIONS = {
+            'access_key': decouple.config('BACKUP_ACCESS_KEY', default=None),
+            'secret_key': decouple.config('BACKUP_SECRET_KEY', default=None),
+            'bucket_name': decouple.config('BACKUP_BUCKET_NAME', default=None),
+            'default_acl': decouple.config('BACKUP_DEFAULT_ACL', default='private'),
+            'region_name': decouple.config('BACKUP_REGION', default=None),
+            'endpoint_url': decouple.config('BACKUP_ENDPOINT_URL', default=None),
+        }
+
+    if BACKUP_TYPE == 'local':
+        DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+        DBBACKUP_STORAGE_OPTIONS = {
+            'location': decouple.config('BACKUP_LOCATION', default='/data/backups'),
+        }
+
+    else:
+        raise ValueError(f"Invalid backup type: {BACKUP_TYPE}. Valid options are: s3, local")

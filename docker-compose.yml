@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ja_shortener
+      POSTGRES_USER: ja_shortener
+      POSTGRES_PASSWORD: ja_shortener_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ja_shortener -d ja_shortener"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ja-shortener:
+    image: cr0hn/ja-shortener:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DEBUG=false
+      - SECRET_KEY=your-secret-key-here-please-change-this
+      - DATABASE_URL=postgresql://ja_shortener:ja_shortener_password@postgres:5432/ja_shortener
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
+      - SUPERUSER_USERNAME=admin
+      - SUPERUSER_EMAIL=admin@example.com
+      - SUPERUSER_PASSWORD=admin123
+      - LOG_LEVEL=INFO
+      - GUNICORN_WORKERS=3
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - staticfiles:/staticfiles
+      - data:/data
+
+volumes:
+  postgres_data:
+  staticfiles:
+  data: 
