@@ -1,4 +1,4 @@
-# Just An URL Shortener
+# Just Another URL Shortener
 
 A simple, fast, and secure URL shortener service built with Django. This service allows you to create short URLs from long ones, track visits, and manage your shortened URLs through a beautiful admin interface.
 
@@ -67,7 +67,7 @@ I created this project because I needed a simple, lightweight, and quickly deplo
 
 After searching extensively and not finding a solution that ticked all these boxes, I decided to create my own. This project is the result of that effort - a URL shortener that's both powerful and simple to use.
 
-Whether you're looking to deploy it for personal use or in a production environment, Just An URL Shortener provides all the essential features without the bloat. It's designed to be maintainable, secure, and efficient.
+Whether you're looking to deploy it for personal use or in a production environment, Just Another URL Shortener provides all the essential features without the bloat. It's designed to be maintainable, secure, and efficient.
 
 ## How it works?
 
@@ -96,7 +96,7 @@ Some screenshots of the admin interface:
 
 ## Quick Start with Docker
 
-The simplest way to run Ja Shortener is using Docker:
+The simplest way to run Just Another URL Shortener is using Docker:
 
 ```bash
 docker run -d \
@@ -157,7 +157,7 @@ docker-compose up -d
 
 ### Helm Chart
 
-Ja Shortener is available as a Helm chart on [ArtifactHub](https://artifacthub.io/packages/helm/cr0hn/ja-shortener).
+Just Another URL Shortener is available as a Helm chart on [ArtifactHub](https://artifacthub.io/packages/helm/cr0hn/ja-shortener).
 
 #### Add the Helm repository:
 
@@ -222,6 +222,32 @@ helm upgrade ja-shortener cr0hn/ja-shortener -f values.yaml
 
 ```bash
 helm uninstall ja-shortener
+```
+
+#### For Chart Developers
+
+If you want to work with the chart locally:
+
+1. Add the required repositories:
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+```
+
+2. Download dependencies:
+```bash
+cd helm/ja-shortener
+helm dependency update
+```
+
+3. Package the chart:
+```bash
+helm package .
+```
+
+4. Test the chart:
+```bash
+helm install ja-shortener ./ja-shortener-0.1.0.tgz --dry-run
 ```
 
 ## Configuration
@@ -378,7 +404,7 @@ Create a service file `/etc/systemd/system/ja-shortener-backup.service`:
 
 ```ini
 [Unit]
-Description=Ja Shortener Database Backup
+Description=Just Another URL Shortener Database Backup
 After=network.target
 
 [Service]
@@ -392,7 +418,7 @@ Create a timer file `/etc/systemd/system/ja-shortener-backup.timer`:
 
 ```ini
 [Unit]
-Description=Run Ja Shortener backup daily
+Description=Run Just Another URL Shortener backup daily
 
 [Timer]
 OnCalendar=*-*-* 02:00:00

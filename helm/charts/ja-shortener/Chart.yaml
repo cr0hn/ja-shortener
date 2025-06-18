@@ -17,10 +17,10 @@ sources:
   - https://github.com/cr0hn/ja-shortener
 dependencies:
   - name: postgresql
-    version: "12.x.x"
+    version: "12.5.7"
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
   - name: redis
-    version: "17.x.x"
+    version: "17.11.3"
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled 

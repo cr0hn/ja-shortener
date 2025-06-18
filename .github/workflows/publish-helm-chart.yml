@@ -1,0 +1,72 @@
+name: Release Helm Charts
+
+concurrency: release-helm
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'helm/**'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: 'src'
+          ref: 'main'
+          fetch-depth: 0
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          path: 'dest'
+          ref: 'gh-pages'
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.0'
+
+      - name: Package Helm Chart
+        shell: bash
+        working-directory: src
+        run: |
+          # Create packaged charts directory
+          mkdir -p packaged-charts
+          
+          # Package the helm chart
+          helm package helm/charts/ja-shortener -d packaged-charts/
+          
+          # Generate or update the index
+          if [ -f ../dest/index.yaml ]; then
+            helm repo index packaged-charts/ --merge ../dest/index.yaml --url https://cr0hn.github.io/ja-shortener/
+          else
+            helm repo index packaged-charts/ --url https://cr0hn.github.io/ja-shortener/
+          fi
+
+      - name: Update gh-pages branch
+        shell: bash
+        working-directory: dest
+        run: |
+          # Copy packaged charts and index
+          cp -f ../src/packaged-charts/* .
+          cp -f ../src/packaged-charts/index.yaml .
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add and commit changes
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Release Helm chart from commit $GITHUB_SHA"
+            git push origin gh-pages
+          fi
