@@ -121,6 +121,18 @@ postgresql:
     ports:
       postgresql: 5432
 
+# External PostgreSQL configuration (when postgresql.enabled = false)
+externalDatabase:
+  enabled: false
+  type: "postgresql"  # postgresql, mysql, sqlite
+  host: ""
+  port: 5432
+  database: ""
+  username: ""
+  password: ""
+  # Full DATABASE_URL (overrides above settings if provided)
+  url: ""
+
 # Redis configuration
 redis:
   enabled: true
@@ -133,6 +145,16 @@ redis:
   service:
     ports:
       redis: 6379
+
+# External Redis configuration (when redis.enabled = false)
+externalRedis:
+  enabled: false
+  host: ""
+  port: 6379
+  password: ""
+  database: 0
+  # Full REDIS_URL (overrides above settings if provided)
+  url: ""
 
 # Persistence configuration
 persistence:

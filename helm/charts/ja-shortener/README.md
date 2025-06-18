@@ -194,6 +194,19 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `postgresql.primary.persistence.size` | PostgreSQL storage size | `8Gi` |
 | `postgresql.service.ports.postgresql` | PostgreSQL service port | `5432` |
 
+### External Database Configuration
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `externalDatabase.enabled` | Enable external database (disables internal PostgreSQL) | `false` |
+| `externalDatabase.type` | Database type (postgresql, mysql, sqlite) | `"postgresql"` |
+| `externalDatabase.host` | External database host | `""` |
+| `externalDatabase.port` | External database port | `5432` |
+| `externalDatabase.database` | External database name | `""` |
+| `externalDatabase.username` | External database username | `""` |
+| `externalDatabase.password` | External database password | `""` |
+| `externalDatabase.url` | Full DATABASE_URL (overrides individual settings) | `""` |
+
 ### Redis Configuration
 
 | Parameter | Description | Default |
@@ -203,6 +216,17 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `redis.master.persistence.enabled` | Enable Redis persistence | `true` |
 | `redis.master.persistence.size` | Redis storage size | `8Gi` |
 | `redis.service.ports.redis` | Redis service port | `6379` |
+
+### External Redis Configuration
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `externalRedis.enabled` | Enable external Redis (disables internal Redis) | `false` |
+| `externalRedis.host` | External Redis host | `""` |
+| `externalRedis.port` | External Redis port | `6379` |
+| `externalRedis.password` | External Redis password | `""` |
+| `externalRedis.database` | External Redis database number | `0` |
+| `externalRedis.url` | Full REDIS_URL (overrides individual settings) | `""` |
 
 ### Persistence Configuration
 
@@ -445,6 +469,184 @@ django:
     # schedule: "*/30 * * * *"     # Every 30 minutes (for testing)
 ```
 
+### External Database Setup
+
+```yaml
+# values-external-db.yaml
+# Using external PostgreSQL database
+postgresql:
+  enabled: false  # Disable internal PostgreSQL
+
+externalDatabase:
+  enabled: true
+  type: "postgresql"
+  host: "postgres.example.com"
+  port: 5432
+  database: "ja_shortener_prod"
+  username: "ja_shortener_user"
+  password: "secure_password_here"
+
+# Using external Redis
+redis:
+  enabled: false  # Disable internal Redis
+
+externalRedis:
+  enabled: true
+  host: "redis.example.com"
+  port: 6379
+  password: "redis_secure_password"
+  database: 0
+
+django:
+  secretKey: "your-production-secret-key"
+  allowedHosts: "short.yourdomain.com"
+  csrfTrustedOrigins: "https://short.yourdomain.com"
+```
+
+### Cloud Database Services Setup
+
+```yaml
+# values-cloud-db.yaml
+# Using AWS RDS PostgreSQL and ElastiCache Redis
+postgresql:
+  enabled: false
+
+externalDatabase:
+  enabled: true
+  url: "postgresql://username:password@mydb.cluster-xyz.us-east-1.rds.amazonaws.com:5432/ja_shortener"
+
+redis:
+  enabled: false
+
+externalRedis:
+  enabled: true
+  url: "redis://my-redis.xyz.cache.amazonaws.com:6379/0"
+
+django:
+  secretKey: "your-production-secret-key"
+  backup:
+    enabled: true
+    type: "s3"
+    s3:
+      bucketName: "my-ja-shortener-backups"
+      region: "us-east-1"
+```
+
+### Mixed Setup (External Database + Internal Redis)
+
+```yaml
+# values-mixed.yaml
+# External PostgreSQL but internal Redis
+postgresql:
+  enabled: false
+
+externalDatabase:
+  enabled: true
+  type: "postgresql"
+  host: "managed-postgres.example.com"
+  port: 5432
+  database: "ja_shortener"
+  username: "app_user"
+  password: "database_password"
+
+# Keep internal Redis for caching
+redis:
+  enabled: true
+  auth:
+    password: "internal_redis_password"
+  master:
+    persistence:
+      size: 4Gi
+
+django:
+  secretKey: "your-secret-key"
+  allowedHosts: "myapp.example.com"
+```
+
+### Database URL Format Examples
+
+```yaml
+# Different database URL formats for externalDatabase.url
+
+# PostgreSQL
+externalDatabase:
+  url: "postgresql://user:pass@host:5432/dbname"
+  # or with SSL
+  url: "postgresql://user:pass@host:5432/dbname?sslmode=require"
+
+# MySQL
+externalDatabase:
+  url: "mysql://user:pass@host:3306/dbname"
+
+# SQLite (for development)
+externalDatabase:
+  url: "sqlite:///data/db.sqlite3"
+
+# Redis URL formats for externalRedis.url
+externalRedis:
+  url: "redis://host:6379/0"
+  # or with password
+  url: "redis://:password@host:6379/0"
+  # or with username and password
+  url: "redis://username:password@host:6379/0"
+```
+
+## External Database Support
+
+JA Shortener supports using external databases instead of the bundled PostgreSQL and Redis charts. This is useful for production deployments where you want to use managed database services like AWS RDS, Google Cloud SQL, or Azure Database.
+
+### When to Use External Databases
+
+- **Production environments** where you need high availability and managed backups
+- **Cloud deployments** using managed database services (AWS RDS, Google Cloud SQL, etc.)
+- **Existing infrastructure** where databases are already provisioned
+- **Cost optimization** by sharing databases across multiple applications
+- **Compliance requirements** that mandate specific database configurations
+
+### Configuration Priority
+
+The chart uses the following priority order for database configuration:
+
+1. **External Database URL** (`externalDatabase.url`) - highest priority
+2. **External Database individual settings** (`externalDatabase.host`, `port`, etc.)
+3. **Internal PostgreSQL** (`postgresql.enabled: true`) - default
+
+For Redis:
+
+1. **External Redis URL** (`externalRedis.url`) - highest priority  
+2. **External Redis individual settings** (`externalRedis.host`, `port`, etc.)
+3. **Internal Redis** (`redis.enabled: true`) - default
+
+### Important Notes
+
+- When using external databases, set `postgresql.enabled: false` and/or `redis.enabled: false`
+- The backup CronJob will work with external PostgreSQL databases
+- External databases must be accessible from the Kubernetes cluster
+- Ensure proper network policies and security groups are configured
+- For production, always use SSL/TLS connections to external databases
+
+### Migration from Internal to External
+
+To migrate from internal to external databases:
+
+1. **Backup your data** using the built-in backup functionality
+2. **Set up your external database** and restore the backup
+3. **Update your values.yaml** with external database configuration
+4. **Upgrade your Helm release** with the new configuration
+
+Example migration:
+```bash
+# 1. Create a backup
+kubectl create job --from=cronjob/my-ja-shortener-backup migration-backup
+
+# 2. Wait for backup completion and download
+kubectl wait --for=condition=complete job/migration-backup --timeout=300s
+
+# 3. Update values.yaml with external database config
+# 4. Upgrade with new configuration
+helm upgrade my-ja-shortener ja-shortener/ja-shortener -f values-external.yaml
+```
+
 ## Upgrading
 
 ### To 0.2.0
@@ -574,6 +776,36 @@ Common backup issues:
 - **Local storage**: Check if PVC is properly mounted and has sufficient space
 - **Database connectivity**: Ensure the backup job can reach PostgreSQL
 - **Resource limits**: Backup jobs may need more memory for large databases
+
+### External Database Issues
+
+Check external database connectivity:
+```bash
+# Test PostgreSQL connection from a pod
+kubectl exec -it deployment/my-ja-shortener -- psql "$DATABASE_URL" -c "SELECT version();"
+
+# Test Redis connection from a pod
+kubectl exec -it deployment/my-ja-shortener -- redis-cli -u "$REDIS_URL" ping
+```
+
+Verify environment variables are set correctly:
+```bash
+kubectl exec deployment/my-ja-shortener -- env | grep -E "(DATABASE_URL|REDIS_URL)"
+```
+
+Common external database issues:
+- **Network connectivity**: Ensure external databases are reachable from Kubernetes cluster
+- **Firewall rules**: Check security groups/firewall rules allow connections from cluster
+- **DNS resolution**: Verify database hostnames resolve correctly
+- **SSL/TLS issues**: Check certificate validation for encrypted connections
+- **Authentication**: Verify usernames, passwords, and connection strings are correct
+- **Database permissions**: Ensure the database user has required permissions (CREATE, DROP, etc.)
+
+Check database connection in application logs:
+```bash
+kubectl logs deployment/my-ja-shortener | grep -i database
+kubectl logs deployment/my-ja-shortener | grep -i redis
+```
 
 ## Dependencies
 

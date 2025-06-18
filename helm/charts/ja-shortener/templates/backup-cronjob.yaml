@@ -69,7 +69,7 @@ spec:
               env:
                 # Database configuration
                 - name: DATABASE_URL
-                  value: {{ if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
+                  value: {{ if .Values.externalDatabase.enabled }}{{ if .Values.externalDatabase.url }}{{ .Values.externalDatabase.url }}{{ else }}{{ .Values.externalDatabase.type }}://{{ .Values.externalDatabase.username }}:{{ .Values.externalDatabase.password }}@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}{{ end }}{{ else if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
                 {{- if eq .Values.django.backup.type "s3" }}
                 # S3 configuration
                 - name: AWS_ACCESS_KEY_ID
