@@ -1,16 +1,17 @@
 FROM python:3.11-alpine AS base
 
+ENV POSTGRES_CLIENT_VERSION=postgresql15-client
+
 RUN addgroup -S ja_shortener && \
     adduser -S -G ja_shortener -s /bin/false ja_shortener && \
-    apk update && apk upgrade && apk add --no-cache curl && \
+    apk update && apk upgrade && apk add --no-cache curl ${POSTGRES_CLIENT_VERSION} && \
     mkdir /staticfiles /data
 
 FROM base AS builder
 
 ENV POETRY_VIRTUALENVS_CREATE=false
-ENV POSTGRES_CLIENT_VERSION=postgresql15-client
 
-RUN apk update && apk add build-base libffi-dev openssl-dev ${POSTGRES_CLIENT_VERSION} && \
+RUN apk update && apk add build-base libffi-dev openssl-dev && \
     pip install --disable-pip-version-check --no-cache-dir -U poetry poetry-plugin-export && \
     mkdir /wheels
 
