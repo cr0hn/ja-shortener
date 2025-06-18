@@ -164,7 +164,7 @@ Just Another URL Shortener is available as a Helm chart on [ArtifactHub](https:/
 #### Add the Helm repository:
 
 ```bash
-helm repo add cr0hn https://cr0hn.github.io/helm-charts
+helm repo add cr0hn https://cr0hn.github.io/ja-shortener/
 helm repo update
 ```
 
