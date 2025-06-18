@@ -3,7 +3,7 @@ entries:
   ja-shortener:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2025-06-18T08:46:04.68272252Z"
+    created: "2025-06-18T08:50:59.926811064Z"
     dependencies:
     - condition: postgresql.enabled
       name: postgresql
@@ -15,7 +15,7 @@ entries:
       version: 17.11.3
     description: A Helm chart for Ja Shortener - A simple, fast, and secure URL shortener
       service
-    digest: 720e89126a1d2fa0d033ae88a30719097fe4d80240d0606b54bdeec0a3162f28
+    digest: 517a7eb20a9a2871da9407dd83b7784ae7235097364d4928c3c1f00ca231863e
     home: https://github.com/cr0hn/ja-shortener
     keywords:
     - url-shortener
@@ -32,4 +32,4 @@ entries:
     urls:
     - https://cr0hn.github.io/ja-shortener/ja-shortener-0.1.0.tgz
     version: 0.1.0
-generated: "2025-06-18T08:46:04.673687792Z"
+generated: "2025-06-18T08:50:59.918011581Z"
