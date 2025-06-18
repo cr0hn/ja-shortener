@@ -1,0 +1,35 @@
+apiVersion: v1
+entries:
+  ja-shortener:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-06-18T08:43:34.191387495Z"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.5.7
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 17.11.3
+    description: A Helm chart for Ja Shortener - A simple, fast, and secure URL shortener
+      service
+    digest: 7c006a44729b287f1d78533181111a532629eeca3153def6aa39a5399d7b9c6a
+    home: https://github.com/cr0hn/ja-shortener
+    keywords:
+    - url-shortener
+    - django
+    - python
+    maintainers:
+    - email: cr0hn@cr0hn.com
+      name: cr0hn
+      url: https://www.cr0hn.com
+    name: ja-shortener
+    sources:
+    - https://github.com/cr0hn/ja-shortener
+    type: application
+    urls:
+    - https://cr0hn.github.io/ja-shortener/ja-shortener-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-06-18T08:43:34.182596326Z"
