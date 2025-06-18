@@ -117,8 +117,6 @@ docker run -d \
 For a more complete setup with PostgreSQL and Redis:
 
 ```yaml
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -372,8 +370,6 @@ Add to your crontab (`crontab -e`):
 #### Using Docker with Cron
 
 ```yaml
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
