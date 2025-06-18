@@ -242,7 +242,7 @@ if ENABLE_BACKUP:
             'endpoint_url': decouple.config('BACKUP_ENDPOINT_URL', default=None),
         }
 
-    if BACKUP_TYPE == 'local':
+    elif BACKUP_TYPE == 'local':
         DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
         DBBACKUP_STORAGE_OPTIONS = {
             'location': decouple.config('BACKUP_LOCATION', default='/data/backups'),
