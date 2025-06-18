@@ -8,8 +8,9 @@ RUN addgroup -S ja_shortener && \
 FROM base AS builder
 
 ENV POETRY_VIRTUALENVS_CREATE=false
+ENV POSTGRES_CLIENT_VERSION=postgresql15-client-15.13-r0
 
-RUN apk add build-base libffi-dev openssl-dev && \
+RUN apk add build-base libffi-dev openssl-dev ${POSTGRES_CLIENT_VERSION} && \
     pip install --disable-pip-version-check --no-cache-dir -U poetry poetry-plugin-export && \
     mkdir /wheels
 

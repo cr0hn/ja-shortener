@@ -1,0 +1,126 @@
+{{- if .Values.django.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "ja-shortener.fullname" . }}-backup
+  labels:
+    {{- include "ja-shortener.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  schedule: {{ .Values.django.backup.schedule | quote }}
+  successfulJobsHistoryLimit: {{ .Values.django.backup.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.django.backup.failedJobsHistoryLimit }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.django.backup.backoffLimit }}
+      template:
+        metadata:
+          labels:
+            {{- include "ja-shortener.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: {{ .Values.django.backup.restartPolicy }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "ja-shortener.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          containers:
+            - name: backup
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -e
+                  echo "Starting backup process at $(date)"
+                  
+                  # Create backup filename with timestamp
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_FILE="ja_shortener_backup_${TIMESTAMP}.sql"
+                  
+                  # Perform database backup
+                  echo "Creating database backup: ${BACKUP_FILE}"
+                  pg_dump "${DATABASE_URL}" > "/tmp/${BACKUP_FILE}"
+                  
+                  {{- if eq .Values.django.backup.type "s3" }}
+                  # Upload to S3
+                  echo "Uploading backup to S3..."
+                  aws s3 cp "/tmp/${BACKUP_FILE}" "s3://${BACKUP_BUCKET_NAME}/backups/${BACKUP_FILE}"
+                  echo "Backup uploaded successfully to S3"
+                  {{- else if eq .Values.django.backup.type "local" }}
+                  # Move to local backup location
+                  echo "Moving backup to local storage..."
+                  mkdir -p "${BACKUP_LOCATION}"
+                  mv "/tmp/${BACKUP_FILE}" "${BACKUP_LOCATION}/${BACKUP_FILE}"
+                  echo "Backup saved to local storage: ${BACKUP_LOCATION}/${BACKUP_FILE}"
+                  
+                  # Clean up old backups (keep last 7 days)
+                  find "${BACKUP_LOCATION}" -name "ja_shortener_backup_*.sql" -mtime +7 -delete
+                  {{- end }}
+                  
+                  echo "Backup process completed successfully at $(date)"
+              env:
+                # Database configuration
+                - name: DATABASE_URL
+                  value: {{ if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
+                {{- if eq .Values.django.backup.type "s3" }}
+                # S3 configuration
+                - name: AWS_ACCESS_KEY_ID
+                  value: {{ .Values.django.backup.s3.accessKey | quote }}
+                - name: AWS_SECRET_ACCESS_KEY
+                  value: {{ .Values.django.backup.s3.secretKey | quote }}
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.django.backup.s3.region | quote }}
+                - name: BACKUP_BUCKET_NAME
+                  value: {{ .Values.django.backup.s3.bucketName | quote }}
+                {{- if .Values.django.backup.s3.endpointUrl }}
+                - name: AWS_ENDPOINT_URL
+                  value: {{ .Values.django.backup.s3.endpointUrl | quote }}
+                {{- end }}
+                {{- else if eq .Values.django.backup.type "local" }}
+                # Local backup configuration
+                - name: BACKUP_LOCATION
+                  value: {{ .Values.django.backup.local.location | quote }}
+                {{- end }}
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              {{- if eq .Values.django.backup.type "local" }}
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: {{ .Values.django.backup.local.location }}
+              {{- end }}
+          {{- if eq .Values.django.backup.type "local" }}
+          volumes:
+            - name: backup-storage
+              {{- if .Values.persistence.enabled }}
+              persistentVolumeClaim:
+                claimName: {{ include "ja-shortener.fullname" . }}-backup
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }} 

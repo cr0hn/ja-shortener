@@ -21,6 +21,8 @@ JA Shortener is a simple, fast, and secure URL shortener service built with Djan
 - Helm 3.2.0+
 - PV provisioner support in the underlying infrastructure
 
+> **⚠️ Note:** The JA Shortener Docker image is built with PostgreSQL 15 client tools. While it should work with other PostgreSQL versions, it's optimized and tested with PostgreSQL 15.
+
 ## Installation
 
 ### Add Helm Repository
@@ -168,6 +170,11 @@ The following table lists the configurable parameters of the JA Shortener chart 
 |-----------|-------------|---------|
 | `django.backup.enabled` | Enable backup functionality | `false` |
 | `django.backup.type` | Backup type (s3 or local) | `"s3"` |
+| `django.backup.schedule` | Cron schedule for backup jobs | `"0 2 * * *"` |
+| `django.backup.successfulJobsHistoryLimit` | Number of successful backup jobs to keep | `3` |
+| `django.backup.failedJobsHistoryLimit` | Number of failed backup jobs to keep | `1` |
+| `django.backup.restartPolicy` | Restart policy for backup jobs | `"OnFailure"` |
+| `django.backup.backoffLimit` | Number of retries before marking backup job as failed | `3` |
 | `django.backup.s3.accessKey` | S3 access key | `""` |
 | `django.backup.s3.secretKey` | S3 secret key | `""` |
 | `django.backup.s3.bucketName` | S3 bucket name | `""` |
@@ -292,6 +299,152 @@ redis:
       size: 10Gi
 ```
 
+### High Availability Setup
+
+```yaml
+# values-ha.yaml
+replicaCount: 5
+
+django:
+  secretKey: "your-production-secret-key"
+  debug: false
+  allowedHosts: "short.yourdomain.com"
+  csrfTrustedOrigins: "https://short.yourdomain.com"
+
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+# High availability for dependencies
+postgresql:
+  auth:
+    password: "your-secure-db-password"
+  primary:
+    persistence:
+      size: 100Gi
+  readReplicas:
+    replicaCount: 2
+
+redis:
+  auth:
+    password: "your-secure-redis-password"
+  sentinel:
+    enabled: true
+  master:
+    persistence:
+      size: 20Gi
+
+# Backup with S3
+django:
+  backup:
+    enabled: true
+    type: "s3"
+    schedule: "0 3 * * *"  # Daily at 3 AM
+    successfulJobsHistoryLimit: 7
+    failedJobsHistoryLimit: 3
+    s3:
+      accessKey: "your-s3-access-key"
+      secretKey: "your-s3-secret-key"
+      bucketName: "ja-shortener-backups-prod"
+      region: "us-east-1"
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - ja-shortener
+        topologyKey: kubernetes.io/hostname
+```
+
+### Development Setup with Local Backups
+
+```yaml
+# values-dev.yaml
+django:
+  debug: true
+  secretKey: "dev-secret-key-not-for-production"
+  allowedHosts: "*"
+  
+  backup:
+    enabled: true
+    type: "local"
+    schedule: "0 */6 * * *"  # Every 6 hours
+    successfulJobsHistoryLimit: 2
+    failedJobsHistoryLimit: 1
+    local:
+      location: "/data/backups"
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+postgresql:
+  primary:
+    persistence:
+      size: 5Gi
+
+redis:
+  master:
+    persistence:
+      size: 2Gi
+```
+
+### Backup with MinIO (S3-compatible)
+
+```yaml
+# values-minio.yaml
+django:
+  backup:
+    enabled: true
+    type: "s3"
+    schedule: "0 1 * * *"  # Daily at 1 AM
+    s3:
+      accessKey: "minio-access-key"
+      secretKey: "minio-secret-key"
+      bucketName: "ja-shortener-backups"
+      region: "us-east-1"
+      endpointUrl: "https://minio.yourdomain.com"
+```
+
+### Backup Schedule Examples
+
+```yaml
+# Different backup schedules
+django:
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"          # Daily at 2 AM
+    # schedule: "0 */12 * * *"     # Every 12 hours
+    # schedule: "0 2 * * 0"        # Weekly on Sunday at 2 AM
+    # schedule: "0 2 1 * *"        # Monthly on the 1st at 2 AM
+    # schedule: "*/30 * * * *"     # Every 30 minutes (for testing)
+```
+
 ## Upgrading
 
 ### To 0.2.0
@@ -300,6 +453,68 @@ Check the [CHANGELOG](https://github.com/cr0hn/ja-shortener/blob/main/CHANGELOG.
 
 ```bash
 helm upgrade my-ja-shortener ja-shortener/ja-shortener
+```
+
+## Automated Backups
+
+> **⚠️ Note:** The automated backup functionality uses PostgreSQL 15 client tools (`pg_dump`). Ensure your PostgreSQL database version is compatible with these tools for proper backup operations.
+
+JA Shortener includes automated backup functionality that can be configured to run on a schedule using Kubernetes CronJobs. The backup system supports both S3-compatible storage and local persistent volumes.
+
+### Features
+
+- **Automated PostgreSQL database backups** using `pg_dump`
+- **Flexible scheduling** with cron expressions
+- **Multiple storage backends** (S3, MinIO, local storage)
+- **Automatic cleanup** of old backups (for local storage)
+- **Job history management** with configurable limits
+- **Retry logic** with configurable backoff limits
+
+### Backup Types
+
+#### S3-Compatible Storage
+Backups are uploaded to S3 or S3-compatible services (like MinIO) with the following naming convention:
+```
+ja_shortener_backup_YYYYMMDD_HHMMSS.sql
+```
+
+#### Local Storage
+Backups are stored in a persistent volume with automatic cleanup of files older than 7 days.
+
+### Monitoring Backups
+
+```bash
+# Check backup job status
+kubectl get cronjobs -l app.kubernetes.io/name=ja-shortener
+
+# View backup job history
+kubectl get jobs -l app.kubernetes.io/name=ja-shortener,app.kubernetes.io/component=backup
+
+# Check backup logs
+kubectl logs -l app.kubernetes.io/name=ja-shortener,app.kubernetes.io/component=backup
+
+# Manually trigger a backup job
+kubectl create job --from=cronjob/my-ja-shortener-backup manual-backup-$(date +%s)
+```
+
+### Backup Restore
+
+#### From S3
+```bash
+# Download backup file
+aws s3 cp s3://your-bucket/backups/ja_shortener_backup_20231215_020000.sql ./backup.sql
+
+# Restore to database
+kubectl exec -i deployment/my-ja-shortener-postgresql -- psql -U ja_shortener -d ja_shortener < backup.sql
+```
+
+#### From Local Storage
+```bash
+# Copy backup from persistent volume
+kubectl cp my-ja-shortener-backup-pod:/data/backups/ja_shortener_backup_20231215_020000.sql ./backup.sql
+
+# Restore to database
+kubectl exec -i deployment/my-ja-shortener-postgresql -- psql -U ja_shortener -d ja_shortener < backup.sql
 ```
 
 ## Troubleshooting
@@ -335,6 +550,30 @@ Check database connectivity:
 ```bash
 kubectl exec -it deployment/my-ja-shortener -- python manage.py dbshell
 ```
+
+### Backup Issues
+
+Check backup CronJob status:
+```bash
+kubectl get cronjobs my-ja-shortener-backup
+kubectl describe cronjob my-ja-shortener-backup
+```
+
+View failed backup jobs:
+```bash
+kubectl get jobs -l app.kubernetes.io/component=backup --field-selector status.successful!=1
+```
+
+Check backup job logs:
+```bash
+kubectl logs job/my-ja-shortener-backup-<job-id>
+```
+
+Common backup issues:
+- **S3 credentials**: Verify AWS credentials and bucket permissions
+- **Local storage**: Check if PVC is properly mounted and has sufficient space
+- **Database connectivity**: Ensure the backup job can reach PostgreSQL
+- **Resource limits**: Backup jobs may need more memory for large databases
 
 ## Dependencies
 

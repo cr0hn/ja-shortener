@@ -112,6 +112,8 @@ docker run -d \
 
 ### Docker Compose
 
+> **⚠️ Note:** The Docker image is built with PostgreSQL 15 client tools. While it should work with other PostgreSQL versions, it's optimized and tested with PostgreSQL 15.
+
 For a more complete setup with PostgreSQL and Redis:
 
 ```yaml
@@ -275,6 +277,8 @@ The application can be configured using environment variables. Here's a complete
 | SUPERUSER_PASSWORD | Superuser password | None | Yes |
 
 ### Backup Configuration
+
+> **⚠️ Note:** The backup functionality uses PostgreSQL 15 client tools (`pg_dump`, `psql`). Ensure your PostgreSQL database version is compatible with these tools.
 
 The application uses [django-dbbackup](https://django-dbbackup.readthedocs.io/) for database backups. Here are the available configuration options:
 
