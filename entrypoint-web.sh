@@ -6,7 +6,7 @@ export GUNICORN_WORKERS="${GUNICORN_WORKERS:-5}"
 python manage.py migrate --noinput
 
 if [ -n "$SUPERUSER_USERNAME" ] && [ -n "$SUPERUSER_PASSWORD" ]; then
-    python manage.py createsuperuser "$SUPERUSER_USERNAME" "$SUPERUSER_EMAIL" "$SUPERUSER_PASSWORD" || true
+    python manage.py ja_createsuperuser "$SUPERUSER_USERNAME" "$SUPERUSER_EMAIL" "$SUPERUSER_PASSWORD" || true
 fi
 
 
