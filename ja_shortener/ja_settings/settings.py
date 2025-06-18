@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 
 import decouple
+from botocore.config import Config as BotoConfig
 
 from django.urls import reverse_lazy
 from django.templatetags.static import static
@@ -240,6 +241,10 @@ if ENABLE_BACKUP:
             'default_acl': decouple.config('BACKUP_DEFAULT_ACL', default='private'),
             'region_name': decouple.config('BACKUP_REGION', default=None),
             'endpoint_url': decouple.config('BACKUP_ENDPOINT_URL', default=None),
+            'client_config': BotoConfig(
+                request_checksum_calculation='when_required',
+                response_checksum_validation='when_required'
+            )
         }
 
     elif BACKUP_TYPE == 'local':
