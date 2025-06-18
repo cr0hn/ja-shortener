@@ -1,33 +1,45 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [Just An URL Shortener](#just-an-url-shortener)
-  - [Features](#features)
-  - [Screenshots](#screenshots)
-  - [Quick Start with Docker](#quick-start-with-docker)
-  - [Configuration](#configuration)
-    - [Backup Configuration](#backup-configuration)
-      - [S3 Backup Configuration](#s3-backup-configuration)
-      - [Local Backup Configuration](#local-backup-configuration)
-    - [Backup Commands](#backup-commands)
-      - [Manual Backup](#manual-backup)
-      - [Restore Backup](#restore-backup)
-      - [List Backups](#list-backups)
-    - [Automated Backups](#automated-backups)
-      - [Using Cron](#using-cron)
-      - [Using Docker with Cron](#using-docker-with-cron)
-      - [Using Systemd Timer](#using-systemd-timer)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [Commercial License](#commercial-license)
-  - [Author](#author)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 # Just An URL Shortener
 
 A simple, fast, and secure URL shortener service built with Django. This service allows you to create short URLs from long ones, track visits, and manage your shortened URLs through a beautiful admin interface.
+
+## Table of Contents
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Features](#features)
+- [Why this project?](#why-this-project)
+- [How it works?](#how-it-works)
+- [Screenshots](#screenshots)
+- [Quick Start with Docker](#quick-start-with-docker)
+  - [Docker Compose](#docker-compose)
+  - [Helm Chart](#helm-chart)
+    - [Add the Helm repository:](#add-the-helm-repository)
+    - [Install the chart:](#install-the-chart)
+    - [Customize the installation:](#customize-the-installation)
+    - [Upgrade the installation:](#upgrade-the-installation)
+    - [Uninstall the chart:](#uninstall-the-chart)
+- [Configuration](#configuration)
+  - [Backup Configuration](#backup-configuration)
+    - [S3 Backup Configuration](#s3-backup-configuration)
+    - [Local Backup Configuration](#local-backup-configuration)
+  - [Backup Commands](#backup-commands)
+    - [Manual Backup](#manual-backup)
+    - [Restore Backup](#restore-backup)
+    - [List Backups](#list-backups)
+  - [Automated Backups](#automated-backups)
+    - [Using Cron](#using-cron)
+    - [Using Docker with Cron](#using-docker-with-cron)
+    - [Using Systemd Timer](#using-systemd-timer)
+- [Important Considerations](#important-considerations)
+  - [High Availability (HA) Setup](#high-availability-ha-setup)
+  - [Production Checklist](#production-checklist)
+- [License](#license)
+  - [License Terms](#license-terms)
+- [Author](#author)
+- [Contributing](#contributing)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Features
 
@@ -38,9 +50,40 @@ A simple, fast, and secure URL shortener service built with Django. This service
 - 🐳 Docker support
 - 🔄 Redis caching support
 - 📝 Sentry integration for error tracking
+- ☸️ Kubernetes support
 - 💾 Automatic database backups
   - S3 storage support
   - Local storage support
+
+## Why this project?
+
+I created this project because I needed a simple, lightweight, and quickly deployable URL shortener. While there are many URL shorteners available, I couldn't find one that met my specific requirements:
+
+- Simple and straightforward interface
+- Easy to deploy and maintain
+- Open source but production-ready
+- No unnecessary complexity
+- Beautiful but functional admin interface
+
+After searching extensively and not finding a solution that ticked all these boxes, I decided to create my own. This project is the result of that effort - a URL shortener that's both powerful and simple to use.
+
+Whether you're looking to deploy it for personal use or in a production environment, Just An URL Shortener provides all the essential features without the bloat. It's designed to be maintainable, secure, and efficient.
+
+## How it works?
+
+After installing the project, you can access the admin interface at `http://localhost:8000/admin/` (you must configure the `ADMIN_URL` environment variable to change the default admin URL).
+
+At the admin interface, you can:
+
+- Create new shortened URLs with a single click
+- View detailed analytics for each URL, including:
+
+   - Total visits
+   - Unique visitors
+   - Visit trends over time
+   - Geographic distribution of visitors
+
+**No technical knowledge is required** - it's designed to be user-friendly while providing powerful features under the hood.
 
 ## Screenshots
 
@@ -53,38 +96,132 @@ Some screenshots of the admin interface:
 
 ## Quick Start with Docker
 
-**Basic expected**
+The simplest way to run Ja Shortener is using Docker:
 
 ```bash
 docker run -d \
-  -p 8000:8000 \
+  -p 8080:8080 \
   -e SECRET_KEY=your-secret-key \
-  -e SUPERUSER_USERNAME=your-username \
-  -e SUPERUSER_EMAIL=your-email \
-  -e SUPERUSER_PASSWORD=your-password
+  -e SUPERUSER_USERNAME=admin \
+  -e SUPERUSER_EMAIL=admin@example.com \
+  -e SUPERUSER_PASSWORD=admin123 \
   cr0hn/ja-shortener
 ```
 
-**Extended example**
+### Docker Compose
+
+For a more complete setup with PostgreSQL and Redis:
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ja_shortener
+      POSTGRES_USER: ja_shortener
+      POSTGRES_PASSWORD: ja_shortener_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass redis_password
+    volumes:
+      - redis_data:/data
+
+  ja-shortener:
+    image: cr0hn/ja-shortener:latest
+    environment:
+      - SECRET_KEY=your-secret-key
+      - DATABASE_URL=postgresql://ja_shortener:ja_shortener_password@postgres:5432/ja_shortener
+      - REDIS_URL=redis://:redis_password@redis:6379/0
+      - SUPERUSER_USERNAME=admin
+      - SUPERUSER_EMAIL=admin@example.com
+      - SUPERUSER_PASSWORD=admin123
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
+```
+
+Save as `docker-compose.yml` and run:
 
 ```bash
-docker run -d \
-  -p 8000:8000 \
-  -e SECRET_KEY=your-secret-key \
-  -e SUPERUSER_USERNAME=your-username \
-  -e SUPERUSER_EMAIL=your-email \
-  -e DATABASE_URL=postgres://your-username:your-password@your-host:your-port/your-database \
-  -e REDIS_URL=redis://your-host:your-port/your-database \
-  -e SENTRY_DSN=your-sentry-dsn \
-  -e ADMIN_URL=admin/ \
-  -e ENABLE_VISITS_TRACKING=True \
-  -e GUNICORN_WORKERS=5 \
-  -e GUNICORN_LOG_LEVEL=INFO \
-  -e SUPERUSER_PASSWORD=your-password \
-  -e DEBUG=False \
-  -e ALLOWED_HOSTS=your-domain.com \
-  -e CSRF_TRUSTED_ORIGINS=https://your-domain.com \
-  cr0hn/ja-shortener
+docker-compose up -d
+```
+
+### Helm Chart
+
+Ja Shortener is available as a Helm chart on [ArtifactHub](https://artifacthub.io/packages/helm/cr0hn/ja-shortener).
+
+#### Add the Helm repository:
+
+```bash
+helm repo add cr0hn https://cr0hn.github.io/helm-charts
+helm repo update
+```
+
+#### Install the chart:
+
+```bash
+# Basic installation
+helm install ja-shortener cr0hn/ja-shortener
+
+# Installation with custom values
+helm install ja-shortener cr0hn/ja-shortener -f values.yaml
+
+# Installation in a specific namespace
+helm install ja-shortener cr0hn/ja-shortener -n your-namespace
+```
+
+#### Customize the installation:
+
+Create a `values.yaml` file:
+
+```yaml
+# Basic configuration
+replicaCount: 2
+
+# Django configuration
+django:
+  secretKey: "your-secret-key"
+  admin:
+    username: "admin"
+    email: "admin@example.com"
+    password: "admin123"
+
+# Enable autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+# Configure ingress
+ingress:
+  enabled: true
+  hosts:
+    - host: your-domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+```
+
+#### Upgrade the installation:
+
+```bash
+helm upgrade ja-shortener cr0hn/ja-shortener -f values.yaml
+```
+
+#### Uninstall the chart:
+
+```bash
+helm uninstall ja-shortener
 ```
 
 ## Configuration
@@ -217,20 +354,6 @@ services:
 
   ja-shortener:
     image: cr0hn/ja-shortener:latest
-    environment:
-      - SECRET_KEY=your-secret-key
-      - DATABASE_URL=postgresql://ja_shortener:ja_shortener_password@postgres:5432/ja_shortener
-      - ENABLE_BACKUP=True
-      - BACKUP_TYPE=s3
-      - BACKUP_ACCESS_KEY=your-aws-access-key
-      - BACKUP_SECRET_KEY=your-aws-secret-key
-      - BACKUP_BUCKET_NAME=your-backup-bucket
-      - BACKUP_REGION=us-east-1
-    depends_on:
-      - postgres
-
-  backup-cron:
-    image: cr0hn/ja-shortener:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -286,29 +409,93 @@ sudo systemctl enable ja-shortener-backup.timer
 sudo systemctl start ja-shortener-backup.timer
 ```
 
-## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+## Important Considerations
+
+### High Availability (HA) Setup
+
+When deploying in a High Availability environment, please consider the following:
+
+1. **Session Management**:
+   - If running multiple instances, you MUST configure Redis for session management
+   - Without Redis, users will be logged out when requests hit different instances
+   - Example Redis configuration:
+     ```bash
+     REDIS_URL=redis://your-redis-host:6379/0
+     ```
+
+2. **Database Backups**:
+   - Regular backups are crucial for data safety
+   - Consider using S3 or similar cloud storage for backup redundancy
+   - Test restore procedures regularly
+   - Keep backup encryption keys secure
+
+3. **Load Balancing**:
+   - Ensure sticky sessions are enabled in your load balancer
+   - Configure proper health checks
+   - Consider using a CDN for static files
+
+4. **Security Considerations**:
+   - Always use HTTPS in production
+   - Keep your `SECRET_KEY` secure and rotate it periodically
+   - Regularly update dependencies
+   - Monitor for suspicious activities
+
+5. **Performance**:
+   - Redis caching is recommended for high-traffic deployments
+   - Adjust `GUNICORN_WORKERS` based on your server's CPU cores
+   - Monitor memory usage and adjust accordingly
+
+6. **Monitoring**:
+   - Enable Sentry for error tracking
+   - Set up proper logging
+   - Monitor database connections
+   - Track URL redirection performance
+
+### Production Checklist
+
+Before going to production, ensure you have:
+
+- [ ] Configured Redis for session management
+- [ ] Set up proper database backups
+- [ ] Enabled HTTPS
+- [ ] Configured proper logging
+- [ ] Set up monitoring
+- [ ] Tested backup and restore procedures
+- [ ] Secured all sensitive credentials
+- [ ] Configured proper error handling
+- [ ] Set up rate limiting if needed
+- [ ] Tested under load
 
 ## License
 
 This project is licensed under the Functionary Source License (FSL). See the [LICENSE](LICENSE) file for details.
 
-## Commercial License
+### License Terms
 
-For commercial use or if you need a commercial license, please contact me at cr0hn<at>cr0hn.com.
+This project is available under the Functionary Source License (FSL). You are free to:
+
+- Deploy and use the software for any purpose
+- Modify the source code
+- Run it in production environments
+- Use it for personal or business needs
+
+However, you are **NOT allowed to**:
+
+- Sell or resell this software as a service
+- Offer URL shortening services commercially using this software
+- Create derivative works that compete with this software as a service
+
+If you need to use this software in a way that conflicts with these terms, please contact me at cr0hn<at>cr0hn.com to discuss licensing options.
 
 ## Author
 
 - Daniel García (cr0hn) - cr0hn<at>cr0hn.com
+- [LinkedIn](https://www.linkedin.com/in/garciagarciadaniel/)
+- [GitHub](https://github.com/cr0hn)
+- [Twitter](https://twitter.com/ggdaniel)
+- [Blog](https://www.cr0hn.com)
 
+## Contributing
 
-
-
-
-
-
-
-
-
-
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.

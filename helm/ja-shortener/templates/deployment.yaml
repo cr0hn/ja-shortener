@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ja-shortener.fullname" . }}
+  labels:
+    {{- include "ja-shortener.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ja-shortener.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "ja-shortener.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ja-shortener.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: SECRET_KEY
+              value: {{ .Values.django.secretKey | quote }}
+            - name: DEBUG
+              value: {{ .Values.django.debug | quote }}
+            - name: ALLOWED_HOSTS
+              value: {{ .Values.django.allowedHosts | quote }}
+            - name: CSRF_TRUSTED_ORIGINS
+              value: {{ .Values.django.csrfTrustedOrigins | quote }}
+            - name: ADMIN_URL
+              value: {{ .Values.django.admin.url | quote }}
+            - name: SUPERUSER_USERNAME
+              value: {{ .Values.django.admin.username | quote }}
+            - name: SUPERUSER_EMAIL
+              value: {{ .Values.django.admin.email | quote }}
+            - name: SUPERUSER_PASSWORD
+              value: {{ .Values.django.admin.password | quote }}
+            - name: GUNICORN_WORKERS
+              value: {{ .Values.django.gunicorn.workers | quote }}
+            - name: GUNICORN_LOG_LEVEL
+              value: {{ .Values.django.gunicorn.logLevel | quote }}
+            {{- if .Values.django.sentry.enabled }}
+            - name: SENTRY_DSN
+              value: {{ .Values.django.sentry.dsn | quote }}
+            {{- end }}
+            {{- if .Values.django.backup.enabled }}
+            - name: ENABLE_BACKUP
+              value: "true"
+            - name: BACKUP_TYPE
+              value: {{ .Values.django.backup.type | quote }}
+            {{- if eq .Values.django.backup.type "s3" }}
+            - name: BACKUP_ACCESS_KEY
+              value: {{ .Values.django.backup.s3.accessKey | quote }}
+            - name: BACKUP_SECRET_KEY
+              value: {{ .Values.django.backup.s3.secretKey | quote }}
+            - name: BACKUP_BUCKET_NAME
+              value: {{ .Values.django.backup.s3.bucketName | quote }}
+            - name: BACKUP_REGION
+              value: {{ .Values.django.backup.s3.region | quote }}
+            {{- if .Values.django.backup.s3.endpointUrl }}
+            - name: BACKUP_ENDPOINT_URL
+              value: {{ .Values.django.backup.s3.endpointUrl | quote }}
+            {{- end }}
+            {{- else if eq .Values.django.backup.type "local" }}
+            - name: BACKUP_LOCATION
+              value: {{ .Values.django.backup.local.location | quote }}
+            {{- end }}
+            {{- end }}
+            # Database configuration
+            - name: DATABASE_URL
+              value: {{ if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
+            # Redis configuration
+            - name: REDIS_URL
+              value: {{ if .Values.redis.enabled }}redis://:{{ .Values.redis.auth.password }}@{{ include "ja-shortener.fullname" . }}-redis-master:{{ .Values.redis.service.ports.redis }}/0{{ end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }} 

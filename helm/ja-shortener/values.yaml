@@ -1,0 +1,138 @@
+# Default values for ja-shortener
+replicaCount: 1
+
+image:
+  repository: cr0hn/ja-shortener
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Django application configuration
+django:
+  # Django secret key
+  secretKey: "change-me-in-production"
+  
+  # Debug mode
+  debug: false
+  
+  # Allowed hosts
+  allowedHosts: "*"
+  
+  # CSRF trusted origins
+  csrfTrustedOrigins: "http://localhost"
+  
+  # Admin configuration
+  admin:
+    url: "admin/"
+    username: "admin"
+    email: "admin@example.com"
+    password: "change-me-in-production"
+  
+  # Gunicorn configuration
+  gunicorn:
+    workers: 5
+    logLevel: "INFO"
+  
+  # Sentry configuration
+  sentry:
+    enabled: false
+    dsn: ""
+  
+  # Backup configuration
+  backup:
+    enabled: false
+    type: "s3"  # or "local"
+    s3:
+      accessKey: ""
+      secretKey: ""
+      bucketName: ""
+      region: ""
+      endpointUrl: ""
+    local:
+      location: "/data/backups"
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    database: ja_shortener
+    username: ja_shortener
+    password: ja_shortener_password
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+  service:
+    ports:
+      postgresql: 5432
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    password: redis_password
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+  service:
+    ports:
+      redis: 6379
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: ""
+  size: 8Gi
+  accessMode: ReadWriteOnce
+  annotations: {} 
