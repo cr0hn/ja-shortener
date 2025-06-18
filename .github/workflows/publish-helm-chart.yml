@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - main
     paths:
       - 'helm/**'
 
@@ -57,6 +57,9 @@ jobs:
           # Copy packaged charts and index
           cp -f ../src/packaged-charts/* .
           cp -f ../src/packaged-charts/index.yaml .
+          
+          # Copy ArtifactHub metadata file
+          cp -f ../src/artifacthub-repo.yml .
           
           # Configure git
           git config user.name "github-actions[bot]"

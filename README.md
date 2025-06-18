@@ -19,6 +19,7 @@ A simple, fast, and secure URL shortener service built with Django. This service
     - [Customize the installation:](#customize-the-installation)
     - [Upgrade the installation:](#upgrade-the-installation)
     - [Uninstall the chart:](#uninstall-the-chart)
+    - [For Chart Developers](#for-chart-developers)
 - [Configuration](#configuration)
   - [Backup Configuration](#backup-configuration)
     - [S3 Backup Configuration](#s3-backup-configuration)
@@ -36,6 +37,7 @@ A simple, fast, and secure URL shortener service built with Django. This service
   - [Production Checklist](#production-checklist)
 - [License](#license)
   - [License Terms](#license-terms)
+  - [Commercial License](#commercial-license)
 - [Author](#author)
 - [Contributing](#contributing)
 
@@ -513,6 +515,16 @@ However, you are **NOT allowed to**:
 - Create derivative works that compete with this software as a service
 
 If you need to use this software in a way that conflicts with these terms, please contact me at cr0hn<at>cr0hn.com to discuss licensing options.
+
+### Commercial License
+
+For commercial use that conflicts with the FSL terms, a commercial license is available:
+
+**500€/year + applicable taxes**
+
+> Note: This license does not include support services. 
+
+To purchase a commercial license or discuss custom licensing options, please contact cr0hn<at>cr0hn.com.
 
 ## Author
 
