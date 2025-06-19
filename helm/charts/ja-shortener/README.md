@@ -102,8 +102,22 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `ingress.enabled` | Enable ingress controller resource | `false` |
 | `ingress.className` | IngressClass that will be used to implement the Ingress | `""` |
 | `ingress.annotations` | Additional annotations for the Ingress resource | `{}` |
+| `ingress.host` | Host for the ingress | `"chart-example.local"` |
 | `ingress.hosts` | List of hosts for the ingress | `[{"host": "chart-example.local", "paths": [{"path": "/", "pathType": "ImplementationSpecific"}]}]` |
 | `ingress.tls` | TLS configuration for the ingress | `[]` |
+
+### Traefik Ingress Parameters
+
+JA Shortener supports Traefik as an alternative to standard Kubernetes Ingress. Traefik uses IngressRoute resources instead of standard Ingress resources.
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `ingress.traefik.enabled` | Enable Traefik IngressRoute (disables standard ingress) | `false` |
+| `ingress.traefik.entryPoints.web` | Traefik web entry point for HTTP traffic | `"web"` |
+| `ingress.traefik.entryPoints.websecure` | Traefik websecure entry point for HTTPS traffic | `"websecure"` |
+| `ingress.traefik.port` | Service port for Traefik | `80` |
+
+**Note:** When using Traefik, set `ingress.enabled: false` to avoid conflicts between standard Ingress and Traefik IngressRoute resources.
 
 ### Resource Management
 
@@ -140,6 +154,7 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `django.debug` | Enable Django debug mode | `false` |
 | `django.allowedHosts` | Django allowed hosts | `"*"` |
 | `django.csrfTrustedOrigins` | CSRF trusted origins | `"http://localhost"` |
+| `django.healthPath` | Health check path for liveness/readiness probes | `"/"` |
 
 ### Django Admin Configuration
 
@@ -182,19 +197,21 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `django.backup.s3.endpointUrl` | S3 endpoint URL (for S3-compatible services) | `""` |
 | `django.backup.local.location` | Local backup location | `"/data/backups"` |
 
-### PostgreSQL Configuration
+### Internal PostgreSQL Configuration
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `postgresql.enabled` | Enable PostgreSQL | `true` |
+| `postgresql.enabled` | Enable internal PostgreSQL database | `true` |
 | `postgresql.auth.database` | PostgreSQL database name | `ja_shortener` |
 | `postgresql.auth.username` | PostgreSQL username | `ja_shortener` |
 | `postgresql.auth.password` | PostgreSQL password | `ja_shortener_password` |
 | `postgresql.primary.persistence.enabled` | Enable PostgreSQL persistence | `true` |
-| `postgresql.primary.persistence.size` | PostgreSQL storage size | `8Gi` |
+| `postgresql.primary.persistence.size` | PostgreSQL storage size | `5Gi` |
 | `postgresql.service.ports.postgresql` | PostgreSQL service port | `5432` |
 
 ### External Database Configuration
+
+When using external database, internal PostgreSQL is disabled and not deployed.
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
@@ -205,19 +222,21 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `externalDatabase.database` | External database name | `""` |
 | `externalDatabase.username` | External database username | `""` |
 | `externalDatabase.password` | External database password | `""` |
-| `externalDatabase.url` | Full DATABASE_URL (overrides individual settings) | `""` |
+| `externalDatabase.dsn` | Full DATABASE_DSN (overrides individual settings) | `""` |
 
-### Redis Configuration
+### Internal Redis Configuration
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `redis.enabled` | Enable Redis | `true` |
+| `redis.enabled` | Enable internal Redis instance | `true` |
 | `redis.auth.password` | Redis password | `redis_password` |
 | `redis.master.persistence.enabled` | Enable Redis persistence | `true` |
-| `redis.master.persistence.size` | Redis storage size | `8Gi` |
+| `redis.master.persistence.size` | Redis storage size | `5Gi` |
 | `redis.service.ports.redis` | Redis service port | `6379` |
 
 ### External Redis Configuration
+
+When using external Redis, internal Redis is disabled and not deployed.
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
@@ -226,17 +245,7 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `externalRedis.port` | External Redis port | `6379` |
 | `externalRedis.password` | External Redis password | `""` |
 | `externalRedis.database` | External Redis database number | `0` |
-| `externalRedis.url` | Full REDIS_URL (overrides individual settings) | `""` |
-
-### Persistence Configuration
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `persistence.enabled` | Enable persistence | `true` |
-| `persistence.storageClass` | Storage class name | `""` |
-| `persistence.size` | Persistence volume size | `8Gi` |
-| `persistence.accessMode` | Persistence access mode | `ReadWriteOnce` |
-| `persistence.annotations` | Persistence annotations | `{}` |
+| `externalRedis.dsn` | Full REDIS_DSN (overrides individual settings) | `""` |
 
 ## Example Values
 
@@ -267,6 +276,31 @@ ingress:
     - secretName: ja-shortener-tls
       hosts:
         - short.yourdomain.com
+```
+
+### Traefik Setup
+
+```yaml
+# values-traefik.yaml
+django:
+  secretKey: "your-super-secret-key-here"
+  allowedHosts: "short.yourdomain.com"
+  csrfTrustedOrigins: "https://short.yourdomain.com"
+  healthPath: "/health/"  # Custom health check endpoint
+  admin:
+    username: "admin"
+    email: "admin@yourdomain.com"
+    password: "your-secure-admin-password"
+
+ingress:
+  enabled: false  # Disable standard ingress
+  traefik:
+    enabled: true
+    entryPoints:
+      web: "web"
+      websecure: "websecure"
+    port: 8080
+  host: "short.yourdomain.com"
 ```
 
 ### Production Setup with Autoscaling
@@ -415,10 +449,6 @@ django:
     local:
       location: "/data/backups"
 
-persistence:
-  enabled: true
-  size: 10Gi
-
 resources:
   limits:
     cpu: 500m
@@ -513,14 +543,14 @@ postgresql:
 
 externalDatabase:
   enabled: true
-  url: "postgresql://username:password@mydb.cluster-xyz.us-east-1.rds.amazonaws.com:5432/ja_shortener"
+  dsn: "postgresql://username:password@mydb.cluster-xyz.us-east-1.rds.amazonaws.com:5432/ja_shortener"
 
 redis:
   enabled: false
 
 externalRedis:
   enabled: true
-  url: "redis://my-redis.xyz.cache.amazonaws.com:6379/0"
+  dsn: "redis://my-redis.xyz.cache.amazonaws.com:6379/0"
 
 django:
   secretKey: "your-production-secret-key"
@@ -563,32 +593,34 @@ django:
   allowedHosts: "myapp.example.com"
 ```
 
-### Database URL Format Examples
+### Database DSN Format Examples
 
 ```yaml
-# Different database URL formats for externalDatabase.url
+# Different database DSN formats for externalDatabase.dsn
 
 # PostgreSQL
 externalDatabase:
-  url: "postgresql://user:pass@host:5432/dbname"
+  dsn: "postgresql://user:pass@host:5432/dbname"
   # or with SSL
-  url: "postgresql://user:pass@host:5432/dbname?sslmode=require"
+  dsn: "postgresql://user:pass@host:5432/dbname?sslmode=require"
 
 # MySQL
 externalDatabase:
-  url: "mysql://user:pass@host:3306/dbname"
+  dsn: "mysql://user:pass@host:3306/dbname"
 
 # SQLite (for development)
 externalDatabase:
-  url: "sqlite:///data/db.sqlite3"
+  dsn: "sqlite:///data/db.sqlite3"
 
-# Redis URL formats for externalRedis.url
+# Redis DSN formats for externalRedis.dsn
 externalRedis:
-  url: "redis://host:6379/0"
+  dsn: "redis://host:6379/0"
+
   # or with password
-  url: "redis://:password@host:6379/0"
+  dsn: "redis://:password@host:6379/0"
+
   # or with username and password
-  url: "redis://username:password@host:6379/0"
+  dsn: "redis://username:password@host:6379/0"
 ```
 
 ## External Database Support
@@ -607,13 +639,13 @@ JA Shortener supports using external databases instead of the bundled PostgreSQL
 
 The chart uses the following priority order for database configuration:
 
-1. **External Database URL** (`externalDatabase.url`) - highest priority
+1. **External Database DSN** (`externalDatabase.dsn`) - highest priority
 2. **External Database individual settings** (`externalDatabase.host`, `port`, etc.)
 3. **Internal PostgreSQL** (`postgresql.enabled: true`) - default
 
 For Redis:
 
-1. **External Redis URL** (`externalRedis.url`) - highest priority  
+1. **External Redis DSN** (`externalRedis.dsn`) - highest priority  
 2. **External Redis individual settings** (`externalRedis.host`, `port`, etc.)
 3. **Internal Redis** (`redis.enabled: true`) - default
 
@@ -624,6 +656,7 @@ For Redis:
 - External databases must be accessible from the Kubernetes cluster
 - Ensure proper network policies and security groups are configured
 - For production, always use SSL/TLS connections to external databases
+- Use DSN (Data Source Name) format for complex connection strings with parameters
 
 ### Migration from Internal to External
 
@@ -826,4 +859,4 @@ This chart depends on the following subcharts:
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](https://github.com/cr0hn/ja-shortener/blob/main/LICENSE) file for details. 
+This project is licensed under the Functionary Source License (FSL) - see the [LICENSE](https://github.com/cr0hn/ja-shortener/blob/main/LICENSE) file for details. 

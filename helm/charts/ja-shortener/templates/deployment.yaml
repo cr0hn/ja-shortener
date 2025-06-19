@@ -83,23 +83,23 @@ spec:
             {{- end }}
             # Database configuration
             - name: DATABASE_URL
-              value: {{ if .Values.externalDatabase.enabled }}{{ if .Values.externalDatabase.url }}{{ .Values.externalDatabase.url }}{{ else }}{{ .Values.externalDatabase.type }}://{{ .Values.externalDatabase.username }}:{{ .Values.externalDatabase.password }}@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}{{ end }}{{ else if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
+              value: {{ if .Values.externalDatabase.enabled }}{{ if .Values.externalDatabase.dsn }}{{ .Values.externalDatabase.dsn }}{{ else }}{{ .Values.externalDatabase.type }}://{{ .Values.externalDatabase.username }}:{{ .Values.externalDatabase.password }}@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}{{ end }}{{ else if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
             # Redis configuration
             - name: REDIS_URL
-              value: {{ if .Values.externalRedis.enabled }}{{ if .Values.externalRedis.url }}{{ .Values.externalRedis.url }}{{ else }}redis://{{ if .Values.externalRedis.password }}:{{ .Values.externalRedis.password }}{{ end }}@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}{{ end }}{{ else if .Values.redis.enabled }}redis://:{{ .Values.redis.auth.password }}@{{ include "ja-shortener.fullname" . }}-redis-master:{{ .Values.redis.service.ports.redis }}/0{{ end }}
+              value: {{ if .Values.externalRedis.enabled }}{{ if .Values.externalRedis.dsn }}{{ .Values.externalRedis.dsn }}{{ else }}redis://{{ if .Values.externalRedis.password }}:{{ .Values.externalRedis.password }}{{ end }}@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}{{ end }}{{ else if .Values.redis.enabled }}redis://:{{ .Values.redis.auth.password }}@{{ include "ja-shortener.fullname" . }}-redis-master:{{ .Values.redis.service.ports.redis }}/0{{ end }}
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.django.healthPath | default "/" | quote }}
               port: http
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: {{ .Values.django.healthPath | default "/" | quote }}
               port: http
             initialDelaySeconds: 5
             periodSeconds: 5

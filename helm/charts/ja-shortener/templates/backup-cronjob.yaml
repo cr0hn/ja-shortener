@@ -35,60 +35,59 @@ spec:
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
-                - /bin/bash
-                - -c
-                - |
-                  set -e
-                  echo "Starting backup process at $(date)"
-                  
-                  # Create backup filename with timestamp
-                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-                  BACKUP_FILE="ja_shortener_backup_${TIMESTAMP}.sql"
-                  
-                  # Perform database backup
-                  echo "Creating database backup: ${BACKUP_FILE}"
-                  pg_dump "${DATABASE_URL}" > "/tmp/${BACKUP_FILE}"
-                  
-                  {{- if eq .Values.django.backup.type "s3" }}
-                  # Upload to S3
-                  echo "Uploading backup to S3..."
-                  aws s3 cp "/tmp/${BACKUP_FILE}" "s3://${BACKUP_BUCKET_NAME}/backups/${BACKUP_FILE}"
-                  echo "Backup uploaded successfully to S3"
-                  {{- else if eq .Values.django.backup.type "local" }}
-                  # Move to local backup location
-                  echo "Moving backup to local storage..."
-                  mkdir -p "${BACKUP_LOCATION}"
-                  mv "/tmp/${BACKUP_FILE}" "${BACKUP_LOCATION}/${BACKUP_FILE}"
-                  echo "Backup saved to local storage: ${BACKUP_LOCATION}/${BACKUP_FILE}"
-                  
-                  # Clean up old backups (keep last 7 days)
-                  find "${BACKUP_LOCATION}" -name "ja_shortener_backup_*.sql" -mtime +7 -delete
-                  {{- end }}
-                  
-                  echo "Backup process completed successfully at $(date)"
+                - python
+                - manage.py
+                - dbbackup
               env:
-                # Database configuration
-                - name: DATABASE_URL
-                  value: {{ if .Values.externalDatabase.enabled }}{{ if .Values.externalDatabase.url }}{{ .Values.externalDatabase.url }}{{ else }}{{ .Values.externalDatabase.type }}://{{ .Values.externalDatabase.username }}:{{ .Values.externalDatabase.password }}@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}{{ end }}{{ else if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
+                - name: SECRET_KEY
+                  value: {{ .Values.django.secretKey | quote }}
+                - name: DEBUG
+                  value: {{ .Values.django.debug | quote }}
+                - name: ALLOWED_HOSTS
+                  value: {{ .Values.django.allowedHosts | quote }}
+                - name: CSRF_TRUSTED_ORIGINS
+                  value: {{ .Values.django.csrfTrustedOrigins | quote }}
+                - name: ADMIN_URL
+                  value: {{ .Values.django.admin.url | quote }}
+                - name: SUPERUSER_USERNAME
+                  value: {{ .Values.django.admin.username | quote }}
+                - name: SUPERUSER_EMAIL
+                  value: {{ .Values.django.admin.email | quote }}
+                - name: SUPERUSER_PASSWORD
+                  value: {{ .Values.django.admin.password | quote }}
+                {{- if .Values.django.sentry.enabled }}
+                - name: SENTRY_DSN
+                  value: {{ .Values.django.sentry.dsn | quote }}
+                {{- end }}
+                {{- if .Values.django.backup.enabled }}
+                - name: ENABLE_BACKUP
+                  value: "true"
+                - name: BACKUP_TYPE
+                  value: {{ .Values.django.backup.type | quote }}
                 {{- if eq .Values.django.backup.type "s3" }}
-                # S3 configuration
-                - name: AWS_ACCESS_KEY_ID
+                - name: BACKUP_ACCESS_KEY
                   value: {{ .Values.django.backup.s3.accessKey | quote }}
-                - name: AWS_SECRET_ACCESS_KEY
+                - name: BACKUP_SECRET_KEY
                   value: {{ .Values.django.backup.s3.secretKey | quote }}
-                - name: AWS_DEFAULT_REGION
-                  value: {{ .Values.django.backup.s3.region | quote }}
                 - name: BACKUP_BUCKET_NAME
                   value: {{ .Values.django.backup.s3.bucketName | quote }}
+                - name: BACKUP_REGION
+                  value: {{ .Values.django.backup.s3.region | quote }}
                 {{- if .Values.django.backup.s3.endpointUrl }}
-                - name: AWS_ENDPOINT_URL
+                - name: BACKUP_ENDPOINT_URL
                   value: {{ .Values.django.backup.s3.endpointUrl | quote }}
                 {{- end }}
                 {{- else if eq .Values.django.backup.type "local" }}
-                # Local backup configuration
                 - name: BACKUP_LOCATION
                   value: {{ .Values.django.backup.local.location | quote }}
                 {{- end }}
+                {{- end }}
+                # Database configuration
+                - name: DATABASE_URL
+                  value: {{ if .Values.externalDatabase.enabled }}{{ if .Values.externalDatabase.dsn }}{{ .Values.externalDatabase.dsn }}{{ else }}{{ .Values.externalDatabase.type }}://{{ .Values.externalDatabase.username }}:{{ .Values.externalDatabase.password }}@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}{{ end }}{{ else if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
+                # Redis configuration
+                - name: REDIS_URL
+                  value: {{ if .Values.externalRedis.enabled }}{{ if .Values.externalRedis.url }}{{ .Values.externalRedis.url }}{{ else }}redis://{{ if .Values.externalRedis.password }}:{{ .Values.externalRedis.password }}{{ end }}@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}{{ end }}{{ else if .Values.redis.enabled }}redis://:{{ .Values.redis.auth.password }}@{{ include "ja-shortener.fullname" . }}-redis-master:{{ .Values.redis.service.ports.redis }}/0{{ end }}
               resources:
                 limits:
                   cpu: 500m
@@ -123,4 +122,4 @@ spec:
           tolerations:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-{{- end }} 
+{{- end }}

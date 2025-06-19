@@ -29,12 +29,19 @@ ingress:
   enabled: false
   className: ""
   annotations: {}
+  host: "chart-example.local"
   hosts:
     - host: chart-example.local
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls: []
+  traefik:
+    enabled: false
+    entryPoints:
+      web: "web"
+      websecure: "websecure"
+    port: 80
 
 resources:
   limits:
@@ -71,6 +78,9 @@ django:
   # CSRF trusted origins
   csrfTrustedOrigins: "http://localhost"
   
+  # Health check path
+  healthPath: "/"
+  
   # Admin configuration
   admin:
     url: "admin/"
@@ -106,7 +116,11 @@ django:
     local:
       location: "/data/backups"
 
-# PostgreSQL configuration
+# Database Configuration
+# By default, the chart deploys an internal PostgreSQL database.
+# To use an external database, set postgresql.enabled = false and configure externalDatabase.
+
+# Internal PostgreSQL (default)
 postgresql:
   enabled: true
   auth:
@@ -116,12 +130,13 @@ postgresql:
   primary:
     persistence:
       enabled: true
-      size: 8Gi
+      size: 10Gi
   service:
     ports:
       postgresql: 5432
 
-# External PostgreSQL configuration (when postgresql.enabled = false)
+# External Database Configuration
+# Use this when you want to connect to an existing database (AWS RDS, Google Cloud SQL, etc.)
 externalDatabase:
   enabled: false
   type: "postgresql"  # postgresql, mysql, sqlite
@@ -130,10 +145,14 @@ externalDatabase:
   database: ""
   username: ""
   password: ""
-  # Full DATABASE_URL (overrides above settings if provided)
-  url: ""
+  # Full DATABASE_DSN (overrides above settings if provided)
+  dsn: ""
 
-# Redis configuration
+# Redis Configuration
+# By default, the chart deploys an internal Redis instance.
+# To use an external Redis, set redis.enabled = false and configure externalRedis.
+
+# Internal Redis (default)
 redis:
   enabled: true
   auth:
@@ -141,25 +160,18 @@ redis:
   master:
     persistence:
       enabled: true
-      size: 8Gi
+      size: 5Gi
   service:
     ports:
       redis: 6379
 
-# External Redis configuration (when redis.enabled = false)
+# External Redis Configuration
+# Use this when you want to connect to an existing Redis (AWS ElastiCache, etc.)
 externalRedis:
   enabled: false
   host: ""
   port: 6379
   password: ""
   database: 0
-  # Full REDIS_URL (overrides above settings if provided)
-  url: ""
-
-# Persistence configuration
-persistence:
-  enabled: true
-  storageClass: ""
-  size: 8Gi
-  accessMode: ReadWriteOnce
-  annotations: {} 
+  # Full REDIS_DSN (overrides above settings if provided)
+  dsn: "" 

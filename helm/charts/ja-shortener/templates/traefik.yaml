@@ -1,0 +1,16 @@
+{{- if .Values.ingress.traefik.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ja-shortener
+spec:
+  entryPoints:
+    - {{ .Values.ingress.traefik.entryPoints.websecure | default "websecure" }}
+    - {{ .Values.ingress.traefik.entryPoints.web | default "web" }}
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`)
+      kind: Rule
+      services:
+        - name: ja-shortener-ja-shortener
+          port: {{ .Values.service.port }}
+{{- end }}

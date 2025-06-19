@@ -23,4 +23,11 @@ spec:
   storageClassName: {{ .Values.persistence.storageClass }}
   {{- end }}
   {{- end }}
-{{- end }} 
+  {{- if .Values.persistence.backupStorageClass }}
+  {{- if (eq "-" .Values.persistence.backupStorageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.persistence.backupStorageClass }}
+  {{- end }}
+  {{- end }}
+{{- end }}
