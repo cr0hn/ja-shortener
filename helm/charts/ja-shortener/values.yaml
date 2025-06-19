@@ -155,7 +155,7 @@ externalDatabase:
 
 # Internal Redis (default)
 redis:
-  enabled: true
+  enabled: false
   auth:
     password: redis_password
   master:
