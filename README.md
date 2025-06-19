@@ -19,7 +19,7 @@ A simple, fast, and secure URL shortener service built with Django. This service
     - [Customize the installation:](#customize-the-installation)
     - [Upgrade the installation:](#upgrade-the-installation)
     - [Uninstall the chart:](#uninstall-the-chart)
-    - [For Chart Developers](#for-chart-developers)
+    - [Chart values](#chart-values)
 - [Configuration](#configuration)
   - [Backup Configuration](#backup-configuration)
     - [S3 Backup Configuration](#s3-backup-configuration)
@@ -32,6 +32,7 @@ A simple, fast, and secure URL shortener service built with Django. This service
     - [Using Cron](#using-cron)
     - [Using Docker with Cron](#using-docker-with-cron)
     - [Using Systemd Timer](#using-systemd-timer)
+    - [Kubernetes CronJob](#kubernetes-cronjob)
 - [Important Considerations](#important-considerations)
   - [High Availability (HA) Setup](#high-availability-ha-setup)
   - [Production Checklist](#production-checklist)
@@ -110,6 +111,8 @@ docker run -d \
   cr0hn/ja-shortener
 ```
 
+> By default, the application uses SQLite as the database if no `DATABASE_URL` environment variable is provided.
+
 ### Docker Compose
 
 > **⚠️ Note:** The Docker image is built with PostgreSQL 15 client tools. While it should work with other PostgreSQL versions, it's optimized and tested with PostgreSQL 15.
@@ -178,7 +181,7 @@ helm install ja-shortener cr0hn/ja-shortener
 helm install ja-shortener cr0hn/ja-shortener -f values.yaml
 
 # Installation in a specific namespace
-helm install ja-shortener cr0hn/ja-shortener -n your-namespace
+helm install ja-shortener cr0hn/ja-shortener -n your-namespace --create-namespace
 ```
 
 #### Customize the installation:
@@ -214,6 +217,8 @@ ingress:
           pathType: Prefix
 ```
 
+> **⚠️ Note:** For High Availability (HA) deployments, you need to configure Redis. See the [Redis configuration section](#redis-configuration) below.
+
 #### Upgrade the installation:
 
 ```bash
@@ -226,40 +231,17 @@ helm upgrade ja-shortener cr0hn/ja-shortener -f values.yaml
 helm uninstall ja-shortener
 ```
 
-#### For Chart Developers
+#### Chart values
 
-If you want to work with the chart locally:
-
-1. Add the required repositories:
-```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo update
-```
-
-2. Download dependencies:
-```bash
-cd helm/ja-shortener
-helm dependency update
-```
-
-3. Package the chart:
-```bash
-helm package .
-```
-
-4. Test the chart:
-```bash
-helm install ja-shortener ./ja-shortener-0.1.0.tgz --dry-run
-```
+You can find the default values for the chart in [Artifact Hub](https://artifacthub.io/packages/helm/cr0hn/ja-shortener) or by running:
 
 ## Configuration
-
 
 The application can be configured using environment variables. Here's a complete list of available options:
 
 | Variable | Description | Default Value | Required |
 |----------|-------------|---------------|----------|
-| SECRET_KEY | Django secret key for security | Random generated key | Yes |
+| SECRET_KEY | Django secret key for security | 7dfbc1e6b896492da9cd5ac4b77c11f3167d096998124cfba89e695daebd1047 | Yes |
 | DEBUG | Enable debug mode | False | No |
 | ALLOWED_HOSTS | List of allowed hosts | * | No |
 | CSRF_TRUSTED_ORIGINS | List of trusted origins for CSRF | http://localhost | No |
@@ -268,6 +250,15 @@ The application can be configured using environment variables. Here's a complete
 | SENTRY_DSN | Sentry DSN for error tracking | None (disabled) | No |
 | ADMIN_URL | Custom admin URL path | admin/ | No |
 | ENABLE_VISITS_TRACKING | Enable visit tracking | True | No |
+| ENABLE_BACKUP | Enable automatic backups | False | No |
+| BACKUP_TYPE | Type of backup storage (s3/local) | None | Yes (if ENABLE_BACKUP=True) |
+| BACKUP_ACCESS_KEY | AWS Access Key for S3 backups | None | Yes (for S3) |
+| BACKUP_SECRET_KEY | AWS Secret Key for S3 backups | None | Yes (for S3) |
+| BACKUP_BUCKET_NAME | S3 Bucket name for backups | None | Yes (for S3) |
+| BACKUP_DEFAULT_ACL | S3 ACL for backups | private | No |
+| BACKUP_REGION | AWS Region for S3 backups | None | Yes (for S3) |
+| BACKUP_ENDPOINT_URL | Custom S3 endpoint URL | None | No |
+| BACKUP_LOCATION | Local directory for backups | /data/backups | No |
 | GUNICORN_WORKERS | Number of Gunicorn workers | 5 | No |
 | GUNICORN_LOG_LEVEL | Gunicorn log level | INFO | No |
 | SUPERUSER_USERNAME | Superuser username | None | Yes |
@@ -392,9 +383,8 @@ services:
       - BACKUP_SECRET_KEY=your-aws-secret-key
       - BACKUP_BUCKET_NAME=your-backup-bucket
       - BACKUP_REGION=us-east-1
-    command: >
-      sh -c "echo '0 2 * * * python manage.py dbbackup --compress >> /var/log/backups.log 2>&1' > /etc/crontabs/root &&
-             crond -f -l 8"
+    command: |
+      sh -c "echo '0 2 * * * python manage.py dbbackup --compress >> /var/log/backups.log 2>&1' > /etc/crontabs/root && crond -f -l 8"
 
 volumes:
   postgres_data:
@@ -437,6 +427,85 @@ sudo systemctl enable ja-shortener-backup.timer
 sudo systemctl start ja-shortener-backup.timer
 ```
 
+#### Kubernetes CronJob
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ja-shortener-backup
+  namespace: default
+spec:
+  schedule: "0 */12 * * *"  # Every 12 hours
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: cr0hn/ja-shortener:latest
+            command: ["python", "manage.py", "dbbackup", "--compress"]
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ja-shortener-secrets
+                  key: database-url
+            - name: BACKUP_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ja-shortener-secrets
+                  key: backup-access-key
+            - name: BACKUP_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ja-shortener-secrets
+                  key: backup-secret-key
+            - name: BACKUP_BUCKET_NAME
+              value: "your-backup-bucket"
+            - name: BACKUP_REGION
+              value: "us-east-1"
+            - name: ENABLE_BACKUP
+              value: "true"
+            - name: BACKUP_TYPE
+              value: "s3"
+          restartPolicy: OnFailure
+          serviceAccountName: ja-shortener-backup
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ja-shortener-backup
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ja-shortener-backup
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ja-shortener-backup
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: ja-shortener-backup
+  namespace: default
+roleRef:
+  kind: Role
+  name: ja-shortener-backup
+  apiGroup: rbac.authorization.k8s.io
+
+```
 
 ## Important Considerations
 
@@ -445,40 +514,49 @@ sudo systemctl start ja-shortener-backup.timer
 When deploying in a High Availability environment, please consider the following:
 
 1. **Session Management**:
-   - If running multiple instances, you MUST configure Redis for session management
-   - Without Redis, users will be logged out when requests hit different instances
-   - Example Redis configuration:
-     ```bash
-     REDIS_URL=redis://your-redis-host:6379/0
-     ```
+
+- If running multiple instances, you **MUST** configure Redis for session management
+- Without Redis, users will be logged out when requests hit different instances
+- Example Redis configuration:
+
+```bash
+REDIS_URL=redis://your-redis-host:6379/0
+```
 
 2. **Database Backups**:
-   - Regular backups are crucial for data safety
-   - Consider using S3 or similar cloud storage for backup redundancy
-   - Test restore procedures regularly
-   - Keep backup encryption keys secure
+
+- Regular backups are **crucial** for data safety
+- Consider using S3 or similar cloud storage for backup redundancy
+- Test restore procedures regularly
+- Keep backup encryption keys secure
 
 3. **Load Balancing**:
-   - Ensure sticky sessions are enabled in your load balancer
-   - Configure proper health checks
-   - Consider using a CDN for static files
+
+- Ensure sticky sessions are enabled in your load balancer
+- Configure proper health checks
+- Consider using a CDN for static files
 
 4. **Security Considerations**:
-   - Always use HTTPS in production
-   - Keep your `SECRET_KEY` secure and rotate it periodically
-   - Regularly update dependencies
-   - Monitor for suspicious activities
+
+- Always use HTTPS in production
+- Keep your `SECRET_KEY` secure and rotate it periodically
+- Regularly update dependencies
+- Monitor for suspicious activities
+
+> **⚠️ Note:** The `SECRET_KEY` is used to sign the session cookies. *If you lose it, all users will be logged out.*
 
 5. **Performance**:
-   - Redis caching is recommended for high-traffic deployments
-   - Adjust `GUNICORN_WORKERS` based on your server's CPU cores
-   - Monitor memory usage and adjust accordingly
+
+- Redis caching is recommended for high-traffic deployments
+- Adjust `GUNICORN_WORKERS` based on your server's CPU cores (recommended: CPU cores \* 4 -due it use asyncrhonous working threads-) for optimal performance
+- Monitor memory usage and adjust accordingly
 
 6. **Monitoring**:
-   - Enable Sentry for error tracking
-   - Set up proper logging
-   - Monitor database connections
-   - Track URL redirection performance
+
+- Enabling Sentry for error tracking **is recommended**
+- Set up proper logging
+- Monitor database connections
+- Track URL redirection performance
 
 ### Production Checklist
 
@@ -520,7 +598,7 @@ If you need to use this software in a way that conflicts with these terms, pleas
 
 For commercial use that conflicts with the FSL terms, a commercial license is available:
 
-**500€/year + applicable taxes**
+**1000€/year + applicable taxes**
 
 > Note: This license does not include support services. 
 
