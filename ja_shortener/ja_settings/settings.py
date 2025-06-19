@@ -194,10 +194,10 @@ UNFOLD = {
     "SITE_TITLE": "Ja Shortener",
     "SITE_HEADER": "Ja Shortener",
     "ENVIRONMENT": "ja_admin.unfold_callbacks.environment_callback",
-    # "SITE_LOGO": {
-    #     "light": lambda request: static('ja_admin/logo.png'),
-    #     "dark": lambda request: static('ja_admin/logo.png'),
-    # },
+    "SITE_LOGO": {
+        "light": lambda request: static('shortener/banner.png'),
+        "dark": lambda request: static('shortener/banner.png'),
+    },
     "DASHBOARD_CALLBACK": "ja_admin.unfold_callbacks.dashboard_callback",
     "SIDEBAR": {
         "navigation": [
