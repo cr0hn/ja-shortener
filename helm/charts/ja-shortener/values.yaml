@@ -83,7 +83,7 @@ django:
   healthPath: "health/"
   
   # Admin configuration
-  admin:
+  admin: 
     url: "admin/"
     username: "admin"
     email: "admin@example.com"

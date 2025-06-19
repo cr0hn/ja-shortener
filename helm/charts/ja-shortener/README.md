@@ -293,7 +293,7 @@ django:
   secretKey: "your-super-secret-key-here"
   allowedHosts: "short.yourdomain.com"
   csrfTrustedOrigins: "https://short.yourdomain.com"
-  healthPath: "/health/"  # Custom health check endpoint
+  healthPath: "health/"  # Custom health check endpoint
   admin:
     username: "admin"
     email: "admin@yourdomain.com"
