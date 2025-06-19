@@ -36,12 +36,13 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
   tls: []
-  traefik:
-    enabled: false
-    entryPoints:
-      web: "web"
-      websecure: "websecure"
-    port: 80
+
+traefik:
+  enabled: false
+  entryPoints:
+    web: true
+    websecure: true
+  tls: []
 
 resources:
   limits:

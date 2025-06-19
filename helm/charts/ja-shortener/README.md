@@ -43,6 +43,9 @@ helm install my-ja-shortener ja-shortener/ja-shortener -f my-values.yaml
 
 # Install in specific namespace
 helm install my-ja-shortener ja-shortener/ja-shortener --namespace ja-shortener --create-namespace
+
+# Install with Traefik ingress
+helm install my-ja-shortener ja-shortener/ja-shortener -f values-traefik.yaml
 ```
 
 ## Uninstallation
@@ -106,18 +109,22 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `ingress.hosts` | List of hosts for the ingress | `[{"host": "chart-example.local", "paths": [{"path": "/", "pathType": "ImplementationSpecific"}]}]` |
 | `ingress.tls` | TLS configuration for the ingress | `[]` |
 
+**Note:** Currently, the chart only implements Traefik IngressRoute resources. Standard Kubernetes Ingress resources are not yet implemented. Use `traefik.enabled: true` for ingress functionality.
+
 ### Traefik Ingress Parameters
 
 JA Shortener supports Traefik as an alternative to standard Kubernetes Ingress. Traefik uses IngressRoute resources instead of standard Ingress resources.
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `ingress.traefik.enabled` | Enable Traefik IngressRoute (disables standard ingress) | `false` |
-| `ingress.traefik.entryPoints.web` | Traefik web entry point for HTTP traffic | `"web"` |
-| `ingress.traefik.entryPoints.websecure` | Traefik websecure entry point for HTTPS traffic | `"websecure"` |
-| `ingress.traefik.port` | Service port for Traefik | `80` |
+| `traefik.enabled` | Enable Traefik IngressRoute (disables standard ingress) | `false` |
+| `traefik.entryPoints.web` | Enable Traefik web entry point for HTTP traffic | `true` |
+| `traefik.entryPoints.websecure` | Enable Traefik websecure entry point for HTTPS traffic | `true` |
+| `traefik.tls` | TLS configuration for Traefik | `[]` |
 
-**Note:** When using Traefik, set `ingress.enabled: false` to avoid conflicts between standard Ingress and Traefik IngressRoute resources.
+**Note:** When using Traefik, set `ingress.enabled: false` to avoid conflicts between standard Ingress and Traefik IngressRoute resources. The chart will automatically fail if both are enabled simultaneously.
+
+**Traefik EntryPoints:** The `web` and `websecure` entryPoints are boolean flags that control which Traefik entry points are used. When `true`, the corresponding entry point (`web` for HTTP, `websecure` for HTTPS) will be included in the IngressRoute. You can disable either entry point by setting it to `false`.
 
 ### Resource Management
 
@@ -294,13 +301,69 @@ django:
 
 ingress:
   enabled: false  # Disable standard ingress
-  traefik:
-    enabled: true
-    entryPoints:
-      web: "web"
-      websecure: "websecure"
-    port: 8080
   host: "short.yourdomain.com"
+
+traefik:
+  enabled: true
+  entryPoints:
+    web: true
+    websecure: true
+```
+
+### Traefik Setup with TLS
+
+```yaml
+# values-traefik-tls.yaml
+django:
+  secretKey: "your-super-secret-key-here"
+  allowedHosts: "short.yourdomain.com"
+  csrfTrustedOrigins: "https://short.yourdomain.com"
+  admin:
+    username: "admin"
+    email: "admin@yourdomain.com"
+    password: "your-secure-admin-password"
+
+ingress:
+  enabled: false
+  host: "short.yourdomain.com"
+
+traefik:
+  enabled: true
+  entryPoints:
+    web: true
+    websecure: true
+  tls:
+    - secretName: ja-shortener-tls
+      hosts:
+        - short.yourdomain.com
+```
+
+### Traefik Setup with HTTPS Only
+
+```yaml
+# values-traefik-https-only.yaml
+django:
+  secretKey: "your-super-secret-key-here"
+  allowedHosts: "short.yourdomain.com"
+  csrfTrustedOrigins: "https://short.yourdomain.com"
+  admin:
+    username: "admin"
+    email: "admin@yourdomain.com"
+    password: "your-secure-admin-password"
+
+ingress:
+  enabled: false
+  host: "short.yourdomain.com"
+
+traefik:
+  enabled: true
+  entryPoints:
+    web: false        # Disable HTTP
+    websecure: true   # Enable HTTPS only
+  tls:
+    - secretName: ja-shortener-tls
+      hosts:
+        - short.yourdomain.com
 ```
 
 ### Production Setup with Autoscaling
@@ -838,6 +901,34 @@ Check database connection in application logs:
 ```bash
 kubectl logs deployment/my-ja-shortener | grep -i database
 kubectl logs deployment/my-ja-shortener | grep -i redis
+```
+
+### Traefik Issues
+
+Check Traefik IngressRoute status:
+```bash
+kubectl get ingressroute -l app.kubernetes.io/name=ja-shortener
+kubectl describe ingressroute my-ja-shortener
+```
+
+Verify Traefik is running and configured:
+```bash
+kubectl get pods -l app.kubernetes.io/name=traefik
+kubectl logs -l app.kubernetes.io/name=traefik
+```
+
+Common Traefik issues:
+- **EntryPoints not configured**: Ensure Traefik entryPoints match your configuration
+- **Host mismatch**: Verify the host in `ingress.host` matches your domain
+- **TLS certificate issues**: Check if TLS secret exists and is valid
+- **Service connectivity**: Ensure Traefik can reach the JA Shortener service
+- **Port configuration**: Verify service port matches Traefik configuration
+- **EntryPoint configuration**: Verify `web` and `websecure` boolean values are set correctly for your needs
+
+Check Traefik dashboard (if enabled):
+```bash
+kubectl port-forward svc/traefik 9000:9000
+# Access http://localhost:9000
 ```
 
 ## Dependencies

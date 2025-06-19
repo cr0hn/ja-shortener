@@ -13,3 +13,4 @@ spec:
       name: http
   selector:
     {{- include "ja-shortener.selectorLabels" . | nindent 4 }} 
+    
