@@ -1,6 +1,7 @@
 import hashlib
 
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 
 from uuid_extensions import uuid7
@@ -52,9 +53,20 @@ class ShortUrl(models.Model):
         Override save to auto-generate consecutive short_code if not provided.
         """
         # Get the last short code
-        self.short_code = generate_short_code(
-            ShortUrl.objects.order_by('-short_code').values_list('short_code', flat=True).first()
-        )
+
+        while True:
+            code_attemp = generate_short_code(
+                ShortUrl.objects.order_by('-short_code').values_list('short_code', flat=True).first()
+            )
+
+            forbidden_codes = (
+                settings.HEALTH_URL.replace('/', ''),
+                settings.ADMIN_URL.replace('/', ''),
+            )
+
+            if code_attemp not in forbidden_codes:
+                self.short_code = generate_short_code(code_attemp)
+                break
 
         super().save(*args, **kwargs)
 
