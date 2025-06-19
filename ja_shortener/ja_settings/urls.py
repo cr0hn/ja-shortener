@@ -17,9 +17,11 @@ Including another URLconf
 from django.urls import path
 from django.contrib import admin
 from django.conf import settings
+from django.http import HttpResponse
 from django.urls.conf import include
 
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
+    path(settings.HEALTH_URL, lambda request: HttpResponse('Ok'), name='health'),
     path('', include('shortener.urls')),
 ]

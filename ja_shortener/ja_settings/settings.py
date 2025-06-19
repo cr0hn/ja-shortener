@@ -187,6 +187,7 @@ if sentry := decouple.config('SENTRY_DSN', default=None):
 # Unfold settings: settings el tema de Django Admin: https://unfoldadmin.com/
 # -------------------------------------------------------------------------
 ADMIN_URL = decouple.config('ADMIN_URL', default='admin/')
+HEALTH_URL = decouple.config('HEALTH_URL', default='health/')
 
 # ICONS CAN BE FOUND AT: https://fonts.google.com/icons
 UNFOLD = {
