@@ -191,13 +191,13 @@ ADMIN_URL = decouple.config('ADMIN_URL', default='admin/')
 HEALTH_URL = decouple.config('HEALTH_URL', default='health/')
 
 # Clean
-if ADMIN_URL.endswith('/'):
-    ADMIN_URL = ADMIN_URL[:-1]
+if not ADMIN_URL.endswith('/'):
+    ADMIN_URL = f"{ADMIN_URL}/"
 if ADMIN_URL.startswith('/'):
     ADMIN_URL = ADMIN_URL[1:]
 
-if HEALTH_URL.endswith('/'):
-    HEALTH_URL = HEALTH_URL[:-1]
+if not HEALTH_URL.endswith('/'):
+    HEALTH_URL = f"{HEALTH_URL}/"
 if HEALTH_URL.startswith('/'):
     HEALTH_URL = HEALTH_URL[1:]
 
