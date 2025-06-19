@@ -99,7 +99,7 @@ spec:
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: "/{{ .Values.django.healthPath | default "health/" }}
+              path: "/{{ .Values.django.healthPath | default "health/" }}"
               port: http
             initialDelaySeconds: 5
             periodSeconds: 5
