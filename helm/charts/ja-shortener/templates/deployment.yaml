@@ -44,6 +44,8 @@ spec:
               value: {{ .Values.django.csrfTrustedOrigins | quote }}
             - name: ADMIN_URL
               value: {{ .Values.django.admin.url | quote }}
+            - name: HEALTH_URL
+              value: {{ .Values.django.healthPath | default "health/" | quote }}
             - name: SUPERUSER_USERNAME
               value: {{ .Values.django.admin.username | quote }}
             - name: SUPERUSER_EMAIL
