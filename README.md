@@ -1,6 +1,8 @@
 # Just Another URL Shortener (JAUS)
 
-![JAUS Logo](https://github.com/cr0hn/ja-shortener/blob/main/ja_shortener/shortener/static/shortener/logo.png)
+<div align="center">
+  <img src="https://github.com/cr0hn/ja-shortener/blob/main/ja_shortener/shortener/static/shortener/logo.png" alt="JAUS Logo" width="300" height="300" style="max-width: 300px; max-height: 300px;">
+</div>
 
 A simple, fast, and secure URL shortener service built with Django. This service allows you to create short URLs from long ones, track visits, and manage your shortened URLs through a beautiful admin interface.
 
