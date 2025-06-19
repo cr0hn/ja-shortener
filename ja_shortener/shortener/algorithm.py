@@ -7,7 +7,6 @@ KEY_SPACE = OrderedDict({
     y: x for y, x in enumerate(''.join([
         ascii_letters,  # a-z, A-Z
         digits,        # 0-9
-        "#", "-", "!", "_", "=", "[", "]", ".", ":", ";", "|"  # Special characters
     ]))
 })
 
