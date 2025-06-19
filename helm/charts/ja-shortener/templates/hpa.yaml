@@ -1,10 +1,9 @@
 {{- if .Values.autoscaling.enabled }}
-{{- if not .Values.redis.enabled }}
-{{- if not .Values.externalRedis.enabled }}
-{{- fail "Autoscaling requires Redis to be enabled. Please enable either internal Redis (.Values.redis.enabled) or external Redis (.Values.externalRedis.enabled)" }}
-{{- end }}
-{{- end }}
-{{- end }}
+  {{- if not .Values.redis.enabled }}
+    {{- if not .Values.externalRedis.enabled }}
+    {{- fail "Autoscaling requires Redis to be enabled. Please enable either internal Redis (.Values.redis.enabled) or external Redis (.Values.externalRedis.enabled)" }}
+    {{- end }}
+  {{- end }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
