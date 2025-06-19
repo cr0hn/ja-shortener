@@ -80,7 +80,7 @@ django:
   csrfTrustedOrigins: "http://localhost"
   
   # Health check path
-  healthPath: "/"
+  healthPath: "health/"
   
   # Admin configuration
   admin:

@@ -93,13 +93,13 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: {{ .Values.django.healthPath | default "/" | quote }}
+              path: {{ .Values.django.healthPath | default "health/" | quote }}
               port: http
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: {{ .Values.django.healthPath | default "/" | quote }}
+              path: {{ .Values.django.healthPath | default "health/" | quote }}
               port: http
             initialDelaySeconds: 5
             periodSeconds: 5
