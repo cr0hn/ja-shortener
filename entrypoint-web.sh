@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-export GUNICORN_LOG_LEVEL="${LOG_LEVEL:-INFO}"
+export GUNICORN_LOG_LEVEL="${GUNICORN_LOG_LEVEL:-INFO}"
 export GUNICORN_WORKERS="${GUNICORN_WORKERS:-5}"
 
 python manage.py migrate --noinput

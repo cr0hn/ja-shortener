@@ -173,7 +173,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # -------------------------------------------------------------------------
 # Sentry settings
 # -------------------------------------------------------------------------
-if sentry := decouple.config('SENTRY_DSN', default=None):
+if decouple.config('SENTRY_DSN', default=None):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     
@@ -181,6 +181,7 @@ if sentry := decouple.config('SENTRY_DSN', default=None):
         dsn=decouple.config('SENTRY_DSN', default=None),
         integrations=[DjangoIntegration()],
         traces_sample_rate=1.0,
+        send_default_pii=True,
     )
 
 # -------------------------------------------------------------------------
@@ -188,6 +189,17 @@ if sentry := decouple.config('SENTRY_DSN', default=None):
 # -------------------------------------------------------------------------
 ADMIN_URL = decouple.config('ADMIN_URL', default='admin/')
 HEALTH_URL = decouple.config('HEALTH_URL', default='health/')
+
+# Clean
+if ADMIN_URL.endswith('/'):
+    ADMIN_URL = ADMIN_URL[:-1]
+if ADMIN_URL.startswith('/'):
+    ADMIN_URL = ADMIN_URL[1:]
+
+if HEALTH_URL.endswith('/'):
+    HEALTH_URL = HEALTH_URL[:-1]
+if HEALTH_URL.startswith('/'):
+    HEALTH_URL = HEALTH_URL[1:]
 
 # ICONS CAN BE FOUND AT: https://fonts.google.com/icons
 UNFOLD = {
