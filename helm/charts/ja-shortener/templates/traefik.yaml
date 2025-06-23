@@ -6,20 +6,25 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: {{ include "ja-shortener.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "ja-shortener.labels" . | nindent 4 }}
 spec:
   entryPoints:
-    {{- if .Values.traefik.entryPoints.websecure }}
-    - websecure
-    {{- end }}
     {{- if .Values.traefik.entryPoints.web }}
     - web
+    {{- end }}
+    {{- if .Values.traefik.entryPoints.websecure }}
+    - websecure
     {{- end }}
   routes:
     - match: Host(`{{ .Values.ingress.host }}`)
       kind: Rule
       services:
         - name: {{ include "ja-shortener.fullname" . }}
-          port: http
+          port: 8080
+  {{- if .Values.traefik.tls }}
+  tls:
+    {{- toYaml .Values.traefik.tls | nindent 4 }}
+  {{- end }}
 {{- end }}

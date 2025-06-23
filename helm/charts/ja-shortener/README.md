@@ -75,14 +75,6 @@ The following table lists the configurable parameters of the JA Shortener chart 
 | `image.tag` | Image tag (overrides the image tag whose default is the chart appVersion) | `"latest"` |
 | `imagePullSecrets` | Docker registry secret names as an array | `[]` |
 
-### Service Account
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `serviceAccount.create` | Specifies whether a service account should be created | `true` |
-| `serviceAccount.annotations` | Annotations to add to the service account | `{}` |
-| `serviceAccount.name` | The name of the service account to use | `""` |
-
 ### Security Context
 
 | Parameter | Description | Default |
@@ -95,7 +87,6 @@ The following table lists the configurable parameters of the JA Shortener chart 
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `service.type` | Kubernetes service type | `ClusterIP` |
 | `service.port` | Service port | `8080` |
 
 ### Ingress Parameters
@@ -176,7 +167,7 @@ JA Shortener supports Traefik as an alternative to standard Kubernetes Ingress. 
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `django.gunicorn.workers` | Number of Gunicorn worker processes | `5` |
+| `django.gunicorn.workers` | Number of Gunicorn worker processes | `4` |
 | `django.gunicorn.logLevel` | Gunicorn log level | `"INFO"` |
 
 ### Sentry Integration
@@ -213,7 +204,7 @@ JA Shortener supports Traefik as an alternative to standard Kubernetes Ingress. 
 | `postgresql.auth.username` | PostgreSQL username | `ja_shortener` |
 | `postgresql.auth.password` | PostgreSQL password | `ja_shortener_password` |
 | `postgresql.primary.persistence.enabled` | Enable PostgreSQL persistence | `true` |
-| `postgresql.primary.persistence.size` | PostgreSQL storage size | `5Gi` |
+| `postgresql.primary.persistence.size` | PostgreSQL storage size | `10Gi` |
 | `postgresql.service.ports.postgresql` | PostgreSQL service port | `5432` |
 
 ### External Database Configuration

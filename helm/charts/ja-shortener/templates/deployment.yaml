@@ -24,13 +24,8 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "ja-shortener.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
@@ -87,8 +82,10 @@ spec:
             - name: DATABASE_URL
               value: {{ if .Values.externalDatabase.enabled }}{{ if .Values.externalDatabase.dsn }}{{ .Values.externalDatabase.dsn }}{{ else }}{{ .Values.externalDatabase.type }}://{{ .Values.externalDatabase.username }}:{{ .Values.externalDatabase.password }}@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}{{ end }}{{ else if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
             # Redis configuration
+            {{- if or .Values.redis.enabled .Values.externalRedis.enabled }}
             - name: REDIS_URL
               value: {{ if .Values.externalRedis.enabled }}{{ if .Values.externalRedis.dsn }}{{ .Values.externalRedis.dsn }}{{ else }}redis://{{ if .Values.externalRedis.password }}:{{ .Values.externalRedis.password }}{{ end }}@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}{{ end }}{{ else if .Values.redis.enabled }}redis://:{{ .Values.redis.auth.password }}@{{ include "ja-shortener.fullname" . }}-redis-master:{{ .Values.redis.service.ports.redis }}/0{{ end }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080

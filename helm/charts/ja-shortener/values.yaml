@@ -10,11 +10,6 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-serviceAccount:
-  create: true
-  annotations: {}
-  name: ""
-
 podAnnotations: {}
 
 podSecurityContext: {}
@@ -22,7 +17,6 @@ podSecurityContext: {}
 securityContext: {}
 
 service:
-  type: ClusterIP
   port: 8080
 
 ingress:
@@ -91,7 +85,7 @@ django:
   
   # Gunicorn configuration
   gunicorn:
-    workers: 5
+    workers: 4
     logLevel: "INFO"
   
   # Sentry configuration

@@ -25,13 +25,8 @@ spec:
           imagePullSecrets:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          serviceAccountName: {{ include "ja-shortener.serviceAccountName" . }}
-          securityContext:
-            {{- toYaml .Values.podSecurityContext | nindent 12 }}
           containers:
             - name: backup
-              securityContext:
-                {{- toYaml .Values.securityContext | nindent 16 }}
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               command:
@@ -86,8 +81,10 @@ spec:
                 - name: DATABASE_URL
                   value: {{ if .Values.externalDatabase.enabled }}{{ if .Values.externalDatabase.dsn }}{{ .Values.externalDatabase.dsn }}{{ else }}{{ .Values.externalDatabase.type }}://{{ .Values.externalDatabase.username }}:{{ .Values.externalDatabase.password }}@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}{{ end }}{{ else if .Values.postgresql.enabled }}postgresql://{{ .Values.postgresql.auth.username }}:{{ .Values.postgresql.auth.password }}@{{ include "ja-shortener.fullname" . }}-postgresql:{{ .Values.postgresql.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}{{ end }}
                 # Redis configuration
+                {{- if or .Values.redis.enabled .Values.externalRedis.enabled }}
                 - name: REDIS_URL
-                  value: {{ if .Values.externalRedis.enabled }}{{ if .Values.externalRedis.url }}{{ .Values.externalRedis.url }}{{ else }}redis://{{ if .Values.externalRedis.password }}:{{ .Values.externalRedis.password }}{{ end }}@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}{{ end }}{{ else if .Values.redis.enabled }}redis://:{{ .Values.redis.auth.password }}@{{ include "ja-shortener.fullname" . }}-redis-master:{{ .Values.redis.service.ports.redis }}/0{{ end }}
+                  value: {{ if .Values.externalRedis.enabled }}{{ if .Values.externalRedis.dsn }}{{ .Values.externalRedis.dsn }}{{ else }}redis://{{ if .Values.externalRedis.password }}:{{ .Values.externalRedis.password }}{{ end }}@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}{{ end }}{{ else if .Values.redis.enabled }}redis://:{{ .Values.redis.auth.password }}@{{ include "ja-shortener.fullname" . }}-redis-master:{{ .Values.redis.service.ports.redis }}/0{{ end }}
+                {{- end }}
               resources:
                 limits:
                   cpu: 500m
