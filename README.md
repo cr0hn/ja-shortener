@@ -221,7 +221,7 @@ ingress:
           pathType: Prefix
 ```
 
-> **⚠️ Note:** For High Availability (HA) deployments, you need to configure Redis. See the [Redis configuration section](#redis-configuration) below.
+> **⚠️ Note:** The Helm chart includes Redis by default for High Availability deployments and proper session management.
 
 #### Upgrade the installation:
 
@@ -263,7 +263,7 @@ The application can be configured using environment variables. Here's a complete
 | BACKUP_REGION | AWS Region for S3 backups | None | Yes (for S3) |
 | BACKUP_ENDPOINT_URL | Custom S3 endpoint URL | None | No |
 | BACKUP_LOCATION | Local directory for backups | /data/backups | No |
-| GUNICORN_WORKERS | Number of Gunicorn workers | 5 | No |
+| GUNICORN_WORKERS | Number of Gunicorn workers | 4 | No |
 | GUNICORN_LOG_LEVEL | Gunicorn log level | INFO | No |
 | SUPERUSER_USERNAME | Superuser username | None | Yes |
 | SUPERUSER_EMAIL | Superuser email | None | Yes |
@@ -477,37 +477,6 @@ spec:
             - name: BACKUP_TYPE
               value: "s3"
           restartPolicy: OnFailure
-          serviceAccountName: ja-shortener-backup
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: ja-shortener-backup
-  namespace: default
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: ja-shortener-backup
-  namespace: default
-rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: ja-shortener-backup
-  namespace: default
-subjects:
-- kind: ServiceAccount
-  name: ja-shortener-backup
-  namespace: default
-roleRef:
-  kind: Role
-  name: ja-shortener-backup
-  apiGroup: rbac.authorization.k8s.io
 
 ```
 
@@ -552,7 +521,7 @@ REDIS_URL=redis://your-redis-host:6379/0
 5. **Performance**:
 
 - Redis caching is recommended for high-traffic deployments
-- Adjust `GUNICORN_WORKERS` based on your server's CPU cores (recommended: CPU cores \* 4 -due it use asyncrhonous working threads-) for optimal performance
+- Adjust `GUNICORN_WORKERS` based on your server's CPU cores (recommended: CPU cores × 4 - due to asynchronous working threads) for optimal performance
 - Monitor memory usage and adjust accordingly
 
 6. **Monitoring**:

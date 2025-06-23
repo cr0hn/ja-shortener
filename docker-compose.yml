@@ -28,7 +28,7 @@ services:
       - SUPERUSER_USERNAME=admin
       - SUPERUSER_EMAIL=admin@example.com
       - SUPERUSER_PASSWORD=admin123
-      - LOG_LEVEL=INFO
+      - GUNICORN_LOG_LEVEL=INFO
       - GUNICORN_WORKERS=3
     depends_on:
       postgres:
