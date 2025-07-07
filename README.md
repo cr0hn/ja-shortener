@@ -587,7 +587,7 @@ To purchase a commercial license or discuss custom licensing options, please con
 
 ## Changelog
 
-### [v0.1.1]
+### [v0.1.3]
 
 #### Added
 
@@ -607,6 +607,22 @@ To purchase a commercial license or discuss custom licensing options, please con
   - Short code is now editable in the admin interface
   - Short code is now displayed as a clickable link to the edit page in the admin list view
   - Short code is now displayed with the full shortened URL (including domain) for easy copy and paste
+
+### [v0.1.3]
+
+#### Changed
+
+- **Docker Image**
+
+  - Updated the Docker image to use the latest version of the application
+
+- **Helm Chart**
+
+  - Updated the Helm chart to use the latest version of the application
+
+### [v0.1.1 - v0.1.2]
+
+Minor changes in the Docker image and Helm chart.
 
 ### [v0.1.0]
 

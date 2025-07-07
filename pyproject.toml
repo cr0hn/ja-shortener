@@ -1,6 +1,6 @@
 [project]
 name = "ja-shorterner"
-version = "0.1.1"
+version = "0.1.3"
 description = "Just Another URL shortener"
 authors = [
     {name = "Daniel Garcia (cr0hn)"}
