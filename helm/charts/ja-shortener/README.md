@@ -153,6 +153,8 @@ JA Shortener supports Traefik as an alternative to standard Kubernetes Ingress. 
 | `django.allowedHosts` | Django allowed hosts | `"*"` |
 | `django.csrfTrustedOrigins` | CSRF trusted origins | `"http://localhost"` |
 | `django.healthPath` | Health check path for liveness/readiness probes | `"health/"` |
+| `django.shortenerHost` | Shortener host | `"http://localhost:8000"` |
+| `django.shortenerMinimalLength` | Shortener minimal length | `4` |
 
 ### Django Admin Configuration
 
