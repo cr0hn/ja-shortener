@@ -28,7 +28,7 @@ class ShortUrl(models.Model):
         max_length=40,
         unique=True,
         db_index=True,
-        help_text="Generated short code using a-zA-Z0-9 characters in consecutive order"
+        help_text="Generated short code using a-zA-Z0-9\-_ characters in consecutive order"
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -50,23 +50,60 @@ class ShortUrl(models.Model):
     
     def save(self, *args, **kwargs):
         """
-        Override save to auto-generate consecutive short_code if not provided.
+        Override save to handle custom short codes and auto-generate consecutive short_code if not provided.
+        
+        Logic:
+        1. If short_code is provided: check if it already exists in database
+        2. If short_code is null: find the last consecutive code and generate the next one
         """
-        # Get the last short code
-
-        while True:
-            code_attemp = generate_short_code(
-                ShortUrl.objects.order_by('-short_code').values_list('short_code', flat=True).first()
+        if self.short_code:
+            # Check if the provided short_code already exists (for updates, exclude self)
+            existing = ShortUrl.objects.filter(short_code=self.short_code)
+            if self.pk:
+                existing = existing.exclude(pk=self.pk)
+            
+            if existing.exists():
+                raise ValueError(f"Short code '{self.short_code}' already exists")
+        else:
+            # Find the last consecutive short code to generate the next one
+            # Strategy: find the shortest length codes, then get the last one inserted
+            shortest_length = ShortUrl.objects.aggregate(
+                min_length=models.Min(models.functions.Length('short_code'))
+            )['min_length'] or settings.SHORTENER_MINIMAL_LENGTH
+            
+            # Get all codes with the shortest length, ordered by creation date
+            shortest_codes = (
+                ShortUrl.objects
+                .annotate(code_length=models.functions.Length('short_code'))
+                .filter(code_length=shortest_length)
+                .order_by('-created_at')
+                .values_list('short_code', flat=True)
             )
+            
+            # Get the last inserted code with shortest length
+            last_consecutive_code = shortest_codes.first()
+            
+            # Generate the next consecutive code
+            while True:
+                next_code = generate_short_code(last_consecutive_code or '')
+                
+                # Check if the generated code is not in forbidden codes
+                forbidden_codes = (
+                    getattr(settings, 'HEALTH_URL', '').replace('/', ''),
+                    getattr(settings, 'ADMIN_URL', '').replace('/', ''),
+                )
+                
+                if next_code not in forbidden_codes:
+                    self.short_code = next_code
+                    break
+                
+                # If the generated code is forbidden, use it as base for next generation
+                last_consecutive_code = next_code
 
-            forbidden_codes = (
-                settings.HEALTH_URL.replace('/', ''),
-                settings.ADMIN_URL.replace('/', ''),
-            )
-
-            if code_attemp not in forbidden_codes:
-                self.short_code = generate_short_code(code_attemp)
-                break
+                # Check if the generated code is already in the database
+                if not ShortUrl.objects.filter(short_code=next_code).exists():
+                    self.short_code = next_code
+                    break
 
         super().save(*args, **kwargs)
 

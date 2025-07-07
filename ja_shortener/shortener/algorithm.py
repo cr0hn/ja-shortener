@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from string import ascii_letters, digits
 from collections import OrderedDict
 
@@ -7,6 +9,8 @@ KEY_SPACE = OrderedDict({
     y: x for y, x in enumerate(''.join([
         ascii_letters,  # a-z, A-Z
         digits,        # 0-9
+        '-',           # -
+        '_',           # _
     ]))
 })
 
@@ -21,23 +25,25 @@ def generate_short_code(previous_short_code: str) -> str:
     
     This function implements a custom base-N number system where N is the size of KEY_SPACE.
     It increments the previous code by 1, handling carries similar to decimal addition.
+    The result is padded to SHORTENER_MINIMAL_LENGTH with 'a' characters on the left.
     
     Examples:
-        >>> generate_short_code('a')  # Returns 'b'
-        >>> generate_short_code('z')  # Returns 'aa'
-        >>> generate_short_code('9')  # Returns 'aa'
+        >>> generate_short_code('a')  # Returns 'b' (if SHORTENER_MINIMAL_LENGTH=0)
+        >>> generate_short_code('z')  # Returns 'aa' (if SHORTENER_MINIMAL_LENGTH=2)
+        >>> generate_short_code('9')  # Returns 'aa' (if SHORTENER_MINIMAL_LENGTH=2)
+        >>> generate_short_code('99')  # Returns 'aaaa' (if SHORTENER_MINIMAL_LENGTH=4)
     
     Args:
         previous_short_code: The last generated short code to increment
         
     Returns:
-        str: The next short code in sequence
+        str: The next short code in sequence, padded to SHORTENER_MINIMAL_LENGTH
         
     Raises:
         ValueError: If the input contains characters not in KEY_SPACE
     """
     if not previous_short_code or previous_short_code == "":
-        return KEY_SPACE[0]
+        return KEY_SPACE[0] * settings.SHORTENER_MINIMAL_LENGTH
 
     carry = None
     position = -1
@@ -74,6 +80,14 @@ def generate_short_code(previous_short_code: str) -> str:
             result += previous_short_code[:position]
             break
 
-    return result[::-1]  # Reverse to get correct order
+    # Reverse to get correct order
+    result = result[::-1]
+
+    # Pad with 'a' to reach minimal length
+    minimal_length = settings.SHORTENER_MINIMAL_LENGTH
+    if len(result) < minimal_length:
+        result = KEY_SPACE[0] * (minimal_length - len(result)) + result
+    
+    return result
 
 __all__ = ('generate_short_code',)

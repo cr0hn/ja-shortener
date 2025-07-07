@@ -271,3 +271,25 @@ if ENABLE_BACKUP:
 
     else:
         raise ValueError(f"Invalid backup type: {BACKUP_TYPE}. Valid options are: s3, local")
+    
+
+# -------------------------------------------------------------------------
+# Shortener settings
+# -------------------------------------------------------------------------
+SHORTENER_MINIMAL_LENGTH = decouple.config('SHORTENER_MINIMAL_LENGTH', default=0, cast=int)
+
+if SHORTENER_MINIMAL_LENGTH < 0:
+    raise ValueError("SHORTENER_MINIMAL_LENGTH must be greater than 0")
+
+if SHORTENER_MINIMAL_LENGTH > 50:
+    raise ValueError("SHORTENER_MINIMAL_LENGTH must be less than 50")
+
+# Shortener host. This value is used to generate the shortened URL.
+SHORTENER_HOST = decouple.config('SHORTENER_HOST', default='http://localhost:8000')
+
+if not SHORTENER_HOST.endswith('/'):
+    SHORTENER_HOST = f"{SHORTENER_HOST}/"
+if SHORTENER_HOST.startswith('/'):
+    SHORTENER_HOST = SHORTENER_HOST[1:]
+if not SHORTENER_HOST.startswith('http'):
+    SHORTENER_HOST = f"http://{SHORTENER_HOST}"
