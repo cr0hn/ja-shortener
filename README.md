@@ -44,6 +44,15 @@ A simple, fast, and secure URL shortener service built with Django. This service
   - [License Terms](#license-terms)
   - [Commercial License](#commercial-license)
 - [Author](#author)
+- [Changelog](#changelog)
+  - [[v0.1.3]](#v013)
+    - [Added](#added)
+    - [Changed](#changed)
+  - [[v0.1.3]](#v013-1)
+    - [Changed](#changed-1)
+  - [[v0.1.1 - v0.1.2]](#v011---v012)
+  - [[v0.1.0]](#v010)
+    - [Initial Release](#initial-release)
 - [Contributing](#contributing)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
