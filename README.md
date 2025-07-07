@@ -585,6 +585,43 @@ To purchase a commercial license or discuss custom licensing options, please con
 - [Twitter](https://twitter.com/ggdaniel)
 - [Blog](https://www.cr0hn.com)
 
+## Changelog
+
+### [v0.1.1]
+
+#### Added
+
+- **URL Shortener Core Functionality**
+
+  - Added new characters to the short code generation algorithm: `-` and `_`
+  - Custom short code support with validation
+  - Configurable minimum length via `SHORTENER_MINIMAL_LENGTH` setting
+  - Added `SHORTENER_HOST` configuration variable to customize the host for shortened URLs
+  - Full shortened URLs (including domain) are now displayed in the admin interface for easy copy and paste
+  - Smart algorithm that finds the last consecutive code and generates the next one
+
+#### Changed
+
+- **Admin Interface**
+
+  - Short code is now editable in the admin interface
+  - Short code is now displayed as a clickable link to the edit page in the admin list view
+  - Short code is now displayed with the full shortened URL (including domain) for easy copy and paste
+
+### [v0.1.0]
+
+#### Initial Release
+
+- **First version** of Just Another URL Shortener
+- Core URL shortening functionality
+- Basic admin interface
+- Docker containerization
+- PostgreSQL and Redis support
+
+---
+
+For detailed information about each release, please refer to the [GitHub releases page](https://github.com/cr0hn/ja-shortener/releases).
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
