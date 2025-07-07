@@ -4,7 +4,7 @@ replicaCount: 1
 image:
   repository: cr0hn/ja-shortener
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "v0.1.1"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -63,6 +63,12 @@ affinity: {}
 django:
   # Django secret key
   secretKey: "change-me-in-production"
+
+  # Shortener host
+  shortenerHost: "http://localhost:8000"
+
+  # Shortener minimal length
+  shortenerMinimalLength: 4
   
   # Debug mode
   debug: false

@@ -86,6 +86,14 @@ spec:
             - name: REDIS_URL
               value: {{ if .Values.externalRedis.enabled }}{{ if .Values.externalRedis.dsn }}{{ .Values.externalRedis.dsn }}{{ else }}redis://{{ if .Values.externalRedis.password }}:{{ .Values.externalRedis.password }}{{ end }}@{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}/{{ .Values.externalRedis.database }}{{ end }}{{ else if .Values.redis.enabled }}redis://:{{ .Values.redis.auth.password }}@{{ include "ja-shortener.fullname" . }}-redis-master:{{ .Values.redis.service.ports.redis }}/0{{ end }}
             {{- end }}
+            {{- if .Values.shortenerHost }}
+            - name: SHORTENER_HOST
+              value: {{ .Values.shortenerHost | quote }}
+            {{- end }}
+            {{- if .Values.shortenerMinimalLength }}
+            - name: SHORTENER_MINIMAL_LENGTH
+              value: {{ .Values.shortenerMinimalLength | quote }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080
