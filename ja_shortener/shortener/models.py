@@ -70,36 +70,30 @@ class ShortUrl(models.Model):
             shortest_length = ShortUrl.objects.aggregate(
                 min_length=models.Min(models.functions.Length('short_code'))
             )['min_length'] or settings.SHORTENER_MINIMAL_LENGTH
+
+            if shortest_length is None:
+                shortest_length = settings.SHORTENER_MINIMAL_LENGTH
+
+            if shortest_length < settings.SHORTENER_MINIMAL_LENGTH:
+                shortest_length = settings.SHORTENER_MINIMAL_LENGTH
             
             # Get all codes with the shortest length, ordered by creation date
-            shortest_codes = (
-                ShortUrl.objects
-                .annotate(code_length=models.functions.Length('short_code'))
-                .filter(code_length=shortest_length)
-                .order_by('-created_at')
-                .values_list('short_code', flat=True)
-            )
+            last_consecutive_code = ShortUrl.objects.annotate(
+                code_length=models.functions.Length('short_code')
+            ).filter(code_length=shortest_length).order_by('-created_at').values_list('short_code', flat=True).first()
             
-            # Get the last inserted code with shortest length
-            last_consecutive_code = shortest_codes.first()
+            # Check if the generated code is not in forbidden codes
+            forbidden_codes = (
+                getattr(settings, 'HEALTH_URL', '').replace('/', ''),
+                getattr(settings, 'ADMIN_URL', '').replace('/', ''),
+            )
             
             # Generate the next consecutive code
             while True:
                 next_code = generate_short_code(last_consecutive_code or '')
+                if next_code in forbidden_codes:
+                    continue
                 
-                # Check if the generated code is not in forbidden codes
-                forbidden_codes = (
-                    getattr(settings, 'HEALTH_URL', '').replace('/', ''),
-                    getattr(settings, 'ADMIN_URL', '').replace('/', ''),
-                )
-                
-                if next_code not in forbidden_codes:
-                    self.short_code = next_code
-                    break
-                
-                # If the generated code is forbidden, use it as base for next generation
-                last_consecutive_code = next_code
-
                 # Check if the generated code is already in the database
                 if not ShortUrl.objects.filter(short_code=next_code).exists():
                     self.short_code = next_code
