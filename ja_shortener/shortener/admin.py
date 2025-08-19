@@ -34,17 +34,21 @@ class ShortUrlAdmin(ModelAdmin):
     
     list_display = [
         'custom_short_code_display', 'shortened_url', 'original_url_truncated', 'description_truncated',
-        'total_visits', 'unique_visitors', 'created_at'
+        'total_visits', 'unique_visitors', 'created_at', 'qr_code_display'
     ]
     list_filter = ['created_at', 'updated_at']
     search_fields = ['short_code', 'original_url', 'description']
-    readonly_fields = ['id', 'created_at', 'updated_at', 'shortened_url_display']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'shortened_url_display', 'qr_code_display']
     ordering = ['-created_at']
     
     fieldsets = [
         (_('URL Information'), {
             'fields': ['short_code', 'original_url', 'description'],
             'description': _('Enter the original URL and optionally a custom short code. Leave short code empty for auto-generation.')
+        }),
+        (_('Generated Content'), {
+            'fields': ['shortened_url_display', 'qr_code_display'],
+            'description': _('Auto-generated content for the shortened URL.')
         })
     ]
     
@@ -109,3 +113,13 @@ class ShortUrlAdmin(ModelAdmin):
         """Display unique visitors count."""
         return UrlVisit.get_unique_visitors_count(obj)
     unique_visitors.short_description = _('Unique Visitors')
+    
+    def qr_code_display(self, obj):
+        """Display QR code image as a thumbnail."""
+        if obj.qr_code:
+            return format_html(
+                '<img src="{}" width="60" height="60" style="object-fit: contain;" />',
+                obj.qr_code.url
+            )
+        return '-'
+    qr_code_display.short_description = _('QR Code')

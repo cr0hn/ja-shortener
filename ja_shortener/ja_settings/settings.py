@@ -165,6 +165,14 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = Path(BASE_DIR) / 'staticfiles'
 
+# Media files (User uploads)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = Path(BASE_DIR) / 'media'
+
+# QR codes directory configuration
+QR_CODES_DIR = decouple.config('QR_CODES_DIR', default='qr')
+QR_CODES_PATH = MEDIA_ROOT / QR_CODES_DIR
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

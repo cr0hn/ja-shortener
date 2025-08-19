@@ -1,15 +1,24 @@
 import hashlib
+import uuid
+import os
+from io import BytesIO
 
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.core.files.base import ContentFile
 
 from uuid_extensions import uuid7
+import qrcode
 
 from .algorithm import generate_short_code
 
 def id_uuid7():
     return uuid7()
+
+def qr_image_upload_path(instance, filename):
+    """Generate upload path for QR code images"""
+    return os.path.join(settings.QR_CODES_DIR, filename)
 
 class ShortUrl(models.Model):
     """
@@ -38,6 +47,12 @@ class ShortUrl(models.Model):
         auto_now=True,
         help_text="Timestamp when the URL was last updated"
     )
+    qr_code = models.ImageField(
+        upload_to=qr_image_upload_path,
+        blank=True,
+        null=True,
+        help_text="QR code image for the shortened URL"
+    )
 
     class Meta:
         db_table = 'short_urls'
@@ -47,6 +62,55 @@ class ShortUrl(models.Model):
 
     def __str__(self):
         return f"{self.short_code} -> {self.original_url[:50]}..."
+    
+    def get_full_short_url(self):
+        """Get the complete shortened URL"""
+        if self.short_code:
+            return f"{settings.SHORTENER_HOST}{self.short_code}/"
+        return None
+    
+    def generate_qr_filename(self):
+        """Generate a UUID-based filename for the QR code"""
+        short_url = self.get_full_short_url()
+        if short_url:
+            # Generate UUID based on the shortened URL
+            url_uuid = uuid.uuid5(uuid.NAMESPACE_URL, short_url)
+            return f"{url_uuid}.png"
+        return None
+    
+    def generate_qr_code(self):
+        """Generate QR code for the shortened URL"""
+        short_url = self.get_full_short_url()
+        if not short_url:
+            return
+        
+        # Create QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=14,  # Increased from 10 to 14 (40% larger)
+            border=4,
+        )
+        qr.add_data(short_url)
+        qr.make(fit=True)
+        
+        # Create QR code image
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+        
+        # Save to BytesIO
+        buffer = BytesIO()
+        qr_image.save(buffer, format='PNG')
+        buffer.seek(0)
+        
+        # Generate filename
+        filename = self.generate_qr_filename()
+        if filename:
+            # Save to the qr_code field
+            self.qr_code.save(
+                filename,
+                ContentFile(buffer.read()),
+                save=False
+            )
     
     def save(self, *args, **kwargs):
         """
@@ -98,6 +162,10 @@ class ShortUrl(models.Model):
                 if not ShortUrl.objects.filter(short_code=next_code).exists():
                     self.short_code = next_code
                     break
+
+        # Generate QR code if short_code exists and QR doesn't exist yet
+        if self.short_code and not self.qr_code:
+            self.generate_qr_code()
 
         super().save(*args, **kwargs)
 
