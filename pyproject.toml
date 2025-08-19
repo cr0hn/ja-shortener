@@ -7,7 +7,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<4.0"
 dependencies = [
     "django[argon2] (>=5.2.3,<6.0.0)",
     "django-unfold (>=0.60.0,<0.61.0)",
