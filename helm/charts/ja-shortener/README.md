@@ -14,6 +14,16 @@ JA Shortener is a simple, fast, and secure URL shortener service built with Djan
 - 🔄 Horizontal Pod Autoscaling support
 - 🔐 Configurable backup options (S3 or local)
 - 📈 Sentry integration for error monitoring
+- 📱 QR code generation for shortened URLs
+
+## ⚠️ Important QR Code Limitations
+
+**When QR codes are enabled (`django.qrCodesEnabled: true`):**
+- You **CANNOT** scale beyond 1 replica (`replicaCount: 1`)
+- You **CANNOT** use Horizontal Pod Autoscaling (`autoscaling.enabled: false`)
+- A PVC is required for media file persistence (`media.persistence.enabled: true`)
+
+This is because QR code images are stored in a PVC with `ReadWriteOnce` access mode, which cannot be shared between multiple pods. If you need to scale beyond 1 replica, disable QR codes by setting `django.qrCodesEnabled: false`.
 
 ## Prerequisites
 
@@ -153,6 +163,7 @@ JA Shortener supports Traefik as an alternative to standard Kubernetes Ingress. 
 | `django.allowedHosts` | Django allowed hosts | `"*"` |
 | `django.csrfTrustedOrigins` | CSRF trusted origins | `"http://localhost"` |
 | `django.healthPath` | Health check path for liveness/readiness probes | `"health/"` |
+| `django.qrCodesEnabled` | Enable QR code generation (requires PVC, cannot scale > 1 replica) | `true` |
 | `django.shortenerHost` | Shortener host | `"http://localhost:8000"` |
 | `django.shortenerMinimalLength` | Shortener minimal length | `4` |
 
@@ -246,6 +257,17 @@ When using external Redis, internal Redis is disabled and not deployed.
 | `externalRedis.password` | External Redis password | `""` |
 | `externalRedis.database` | External Redis database number | `0` |
 | `externalRedis.dsn` | Full REDIS_DSN (overrides individual settings) | `""` |
+
+### Media Files Persistence (Required for QR codes)
+
+⚠️ **IMPORTANT**: When QR codes are enabled (`django.qrCodesEnabled: true`), you **MUST NOT** scale replicas above 1 (`replicaCount: 1`). PVCs with `ReadWriteOnce` access mode cannot be shared between multiple pods.
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `media.persistence.enabled` | Enable media files persistence (required for QR codes) | `true` |
+| `media.persistence.size` | Size of the media PVC | `5Gi` |
+| `media.persistence.accessMode` | Access mode for media PVC | `ReadWriteOnce` |
+| `media.persistence.storageClass` | Storage class for media PVC | `""` (default storage class) |
 
 ## Example Values
 

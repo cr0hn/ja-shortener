@@ -32,25 +32,33 @@ class ShortUrlAdmin(ModelAdmin):
     """
     form = ShortUrlAdminForm
     
-    list_display = [
-        'custom_short_code_display', 'shortened_url', 'original_url_truncated', 'description_truncated',
-        'total_visits', 'unique_visitors', 'created_at', 'qr_code_display'
-    ]
+    def get_list_display(self, request):
+        """Dynamically adjust list display based on QR_CODES_ENABLE setting."""
+        list_display = [
+            'custom_short_code_display', 'shortened_url', 'original_url_truncated', 'description_truncated',
+            'total_visits', 'unique_visitors', 'created_at'
+        ]
+        if settings.QR_CODES_ENABLE:
+            list_display.append('qr_code_display')
+        return list_display
     list_filter = ['created_at', 'updated_at']
     search_fields = ['short_code', 'original_url', 'description']
     readonly_fields = ['id', 'created_at', 'updated_at', 'shortened_url_display', 'qr_code_display']
     ordering = ['-created_at']
     
-    fieldsets = [
-        (_('URL Information'), {
-            'fields': ['short_code', 'original_url', 'description'],
-            'description': _('Enter the original URL and optionally a custom short code. Leave short code empty for auto-generation.')
-        }),
-        (_('Generated Content'), {
-            'fields': ['shortened_url_display', 'qr_code_display'],
-            'description': _('Auto-generated content for the shortened URL.')
-        })
-    ]
+    def get_fieldsets(self, request, obj=None):
+        """Dynamically adjust fieldsets based on QR_CODES_ENABLE setting."""
+        fieldsets = [
+            (_('URL Information'), {
+                'fields': ['short_code', 'original_url', 'description'],
+                'description': _('Enter the original URL and optionally a custom short code. Leave short code empty for auto-generation.')
+            }),
+            (_('Generated Content'), {
+                'fields': ['shortened_url_display'] + (['qr_code_display'] if settings.QR_CODES_ENABLE else []),
+                'description': _('Auto-generated content for the shortened URL.')
+            })
+        ]
+        return fieldsets
     
     def _complete_short_url(self, obj):
         """Complete the short URL with the SHORTENER_HOST."""
@@ -116,6 +124,8 @@ class ShortUrlAdmin(ModelAdmin):
     
     def qr_code_display(self, obj):
         """Display QR code image as a thumbnail."""
+        if not settings.QR_CODES_ENABLE:
+            return _('QR codes disabled')
         if obj.qr_code:
             return format_html(
                 '<img src="{}" width="60" height="60" style="object-fit: contain;" />',

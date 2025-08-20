@@ -23,6 +23,13 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         force = options['force']
         
+        # Check if QR codes are enabled
+        if not getattr(settings, 'QR_CODES_ENABLE', True):
+            self.stdout.write(
+                self.style.ERROR('QR code generation is disabled in settings (QR_CODES_ENABLE=False)')
+            )
+            return
+        
         self.stdout.write(
             self.style.SUCCESS(
                 'Generating QR codes for URLs...'

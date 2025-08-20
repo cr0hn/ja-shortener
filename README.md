@@ -70,6 +70,7 @@ A simple, fast, and secure URL shortener service built with Django. This service
 - 💾 Automatic database backups
   - S3 storage support
   - Local storage support
+- 📱 QR code generation for shortened URLs
 
 ## Why this project?
 
@@ -99,7 +100,20 @@ At the admin interface, you can:
    - Visit trends over time
    - Geographic distribution of visitors
 
+- Download QR codes for easy sharing (if QR codes are enabled)
+
 **No technical knowledge is required** - it's designed to be user-friendly while providing powerful features under the hood.
+
+## ⚠️ Important QR Code Limitations
+
+**When using QR codes in Kubernetes/Helm deployments:**
+
+- QR code generation requires persistent storage (PVC)
+- **You CANNOT scale beyond 1 replica** when QR codes are enabled
+- **You CANNOT use Horizontal Pod Autoscaling** when QR codes are enabled
+- This is because PVCs with `ReadWriteOnce` access mode cannot be shared between multiple pods
+
+If you need to scale your deployment, disable QR codes by setting `QR_CODES_ENABLE=False` in your environment variables or `django.qrCodesEnabled: false` in your Helm values.
 
 ## Screenshots
 

@@ -94,6 +94,8 @@ spec:
             - name: SHORTENER_MINIMAL_LENGTH
               value: {{ .Values.shortenerMinimalLength | quote }}
             {{- end }}
+            - name: QR_CODES_ENABLE
+              value: {{ .Values.django.qrCodesEnabled | quote }}
           ports:
             - name: http
               containerPort: 8080
@@ -112,6 +114,17 @@ spec:
           #   periodSeconds: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.media.persistence.enabled }}
+          volumeMounts:
+            - name: media
+              mountPath: /app/media
+          {{- end }}
+      {{- if .Values.media.persistence.enabled }}
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: {{ include "ja-shortener.fullname" . }}-media
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

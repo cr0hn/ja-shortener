@@ -1,0 +1,21 @@
+{{- if .Values.media.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ja-shortener.fullname" . }}-media
+  labels:
+    {{- include "ja-shortener.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.media.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.media.persistence.size }}
+  {{- if .Values.media.persistence.storageClass }}
+  {{- if (eq "-" .Values.media.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.media.persistence.storageClass }}"
+  {{- end }}
+  {{- end }}
+{{- end }}

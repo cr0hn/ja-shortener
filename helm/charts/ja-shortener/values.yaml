@@ -82,6 +82,9 @@ django:
   # Health check path
   healthPath: "health/"
   
+  # QR codes generation (WARNING: requires PVC, cannot scale > 1 replica)
+  qrCodesEnabled: true
+  
   # Admin configuration
   admin: 
     url: "admin/"
@@ -176,3 +179,13 @@ externalRedis:
   database: 0
   # Full REDIS_DSN (overrides above settings if provided)
   dsn: "" 
+
+# Media files persistence (required for QR codes)
+# WARNING: When QR codes are enabled, do not scale replicas > 1
+# PVCs cannot be shared between pods
+media:
+  persistence:
+    enabled: true
+    size: 5Gi
+    accessMode: ReadWriteOnce
+    # storageClass: ""  # Use default storage class

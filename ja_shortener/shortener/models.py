@@ -163,8 +163,8 @@ class ShortUrl(models.Model):
                     self.short_code = next_code
                     break
 
-        # Generate QR code if short_code exists and QR doesn't exist yet
-        if self.short_code and not self.qr_code:
+        # Generate QR code if short_code exists and QR doesn't exist yet and QR codes are enabled
+        if self.short_code and not self.qr_code and settings.QR_CODES_ENABLE:
             self.generate_qr_code()
 
         super().save(*args, **kwargs)

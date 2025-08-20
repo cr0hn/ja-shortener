@@ -169,7 +169,8 @@ STATIC_ROOT = Path(BASE_DIR) / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = Path(BASE_DIR) / 'media'
 
-# QR codes directory configuration
+# QR codes configuration
+QR_CODES_ENABLE = decouple.config('QR_CODES_ENABLE', default=True, cast=bool)
 QR_CODES_DIR = decouple.config('QR_CODES_DIR', default='qr')
 QR_CODES_PATH = MEDIA_ROOT / QR_CODES_DIR
 
