@@ -3,7 +3,7 @@ name = "ja-shorterner"
 version = "0.1.7"
 description = "Just Another URL shortener"
 authors = [
-    {name = "Daniel Garcia (cr0hn)"}
+    {name = "Daniel Alfocea (cr0hn)"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
