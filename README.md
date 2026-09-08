@@ -588,7 +588,7 @@ However, you are **NOT allowed to**:
 - Offer URL shortening services commercially using this software
 - Create derivative works that compete with this software as a service
 
-If you need to use this software in a way that conflicts with these terms, please contact me at cr0hn<at>cr0hn.com to discuss licensing options.
+If you need to use this software in a way that conflicts with these terms, please contact me at daniel<at>danielalfocea.com to discuss licensing options.
 
 ### Commercial License
 
@@ -598,15 +598,15 @@ For commercial use that conflicts with the FSL terms, a commercial license is av
 
 > Note: This license does not include support services. 
 
-To purchase a commercial license or discuss custom licensing options, please contact cr0hn<at>cr0hn.com.
+To purchase a commercial license or discuss custom licensing options, please contact daniel<at>danielalfocea.com.
 
 ## Author
 
-- Daniel García (cr0hn) - cr0hn<at>cr0hn.com
+- Daniel Alfocea (cr0hn) - daniel<at>danielalfocea.com
 - [LinkedIn](https://www.linkedin.com/in/garciagarciadaniel/)
 - [GitHub](https://github.com/cr0hn)
 - [Twitter](https://twitter.com/ggdaniel)
-- [Blog](https://www.cr0hn.com)
+- [Blog](https://danielalfocea.com)
 
 ## Changelog
 
